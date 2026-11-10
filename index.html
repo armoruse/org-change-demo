@@ -2110,7 +2110,7 @@ function getDeptLeadership(deptId) {
           </div>
           <div class="dept-col-title">
             <span class="editable-title" onclick="${!isTarget ? `renameDeptPrompt('${esc(loc.department.id)}')` : ''}" title="${!isTarget ? '點擊修改部門名稱' : ''}">
-              📁 ${esc(loc.department.name)} ${!isTarget ? '<span style="font-size:12px; opacity:0.6;" title="點擊修改名稱">✏️</span>' : ''}
+              📁 ${esc(loc.department.name)}
             </span>
           </div>
           <!-- 部長、副部長無icon，簡潔置於部門名稱下方 -->
@@ -2166,7 +2166,7 @@ function getDeptLeadership(deptId) {
         <div class="group-card-top">
           <div class="group-card-name-row">
             <span class="group-card-title editable-title" onclick="${isManaged ? `renameGroupPrompt('${esc(g.id)}')` : ''}" title="${isManaged ? '點擊修改組別名稱' : ''}">
-              ${esc(g.name)} ${isManaged ? '<span style="font-size:11px; opacity:0.6;" title="點擊修改名稱">✏️</span>' : ''}
+              ${esc(g.name)}
             </span>
             <div class="group-card-actions">
               ${isManaged ? `
@@ -2194,7 +2194,7 @@ function getDeptLeadership(deptId) {
               : '';
             return `
               <div class="person-item ${isLeader ? 'is-leader-item' : ''} ${isChanged ? 'is-changed' : ''} ${selected.has(p.id) ? 'selected' : ''} ${recentlyMovedPersonIds.has(p.id) ? 'drop-pulse' : ''}" 
-                   draggable="false" 
+                   draggable="true" 
                    data-person-id="${esc(p.id)}" 
                    onclick="onPersonCardClick(event, '${esc(p.id)}')"
                    title="${esc(hoverTitle)}">
@@ -2210,32 +2210,20 @@ function getDeptLeadership(deptId) {
                     </div>
                   </div>
                 </div>
-                <div style="display:flex; align-items:center; gap:4px;">
-                  ${isManaged ? `
-                    <button type="button" class="btn-move-person" onclick="event.stopPropagation(); openQuickMoveModal('${esc(p.id)}')" title="點擊調動至其他組別">
-                      ⇄ 調動
-                    </button>
-                  ` : ''}
-                  ${isManaged || isChanged ? `
-                    <button class="btn-edit-person" onclick="event.stopPropagation(); openEditPersonModal('${esc(p.id)}')" title="職務與彈性欄位設定" style="${isChanged ? 'border-color:#eab308; background:#fef08a;' : ''}">
-                      ✏️
-                    </button>
-                  ` : ''}
-                </div>
+                ${isManaged || isChanged ? `
+                  <button class="btn-edit-person" onclick="event.stopPropagation(); openEditPersonModal('${esc(p.id)}')" title="職務與彈性欄位設定" style="${isChanged ? 'border-color:#eab308; background:#fef08a;' : ''}">
+                    ✏️
+                  </button>
+                ` : ''}
               </div>
             `;
           }).join('')}
 
-          ${selected.size > 0 && Array.from(selected).some(pid => people.find(x => x.id === pid)?.group !== g.id) ? `
-            <button type="button" class="btn-group-move-here" onclick="event.stopPropagation(); moveSelectedToGroup('${esc(g.id)}')"
-                    style="width:100%; margin-top:8px; padding:7px 10px; font-size:12.5px; font-weight:800; background:#2563eb; color:#ffffff; border:none; border-radius:6px; cursor:pointer; box-shadow:0 1px 3px rgba(37,99,235,0.3); display:flex; align-items:center; justify-content:center; gap:5px; transition:all 0.15s;">
-              📥 點擊調入此組 (${selected.size} 人)
-            </button>
-          ` : (isForeign && displayMembers.length === 0 ? `
-            <div class="target-drop-hint" style="color:#64748b; font-size:12px; text-align:center; padding:12px 6px;">
-              👆 點選左側同仁後，點擊此處即可調入
+          ${isForeign ? `
+            <div class="target-drop-hint" style="margin-top:${displayMembers.length > 0 ? '6px' : '0'};">
+              📥 可拖曳人員至此
             </div>
-          ` : '')}
+          ` : ''}
         </div>
       </div>
     `;
@@ -2251,15 +2239,15 @@ function getDeptLeadership(deptId) {
 
   window.openSummonTargetDeptModal = function() { return openSummonTargetModal(); };
   window.openSummonTargetModal = function() {
-  };
-  window.openSummonTargetDeptModal = function() {
     const curLoc = locateDept(focusDeptId);
     if (curLoc && curLoc.division) {
       activeSummonDivId = curLoc.division.id;
     }
     summonSelectedDeptIds.clear();
+    summonDeptSearchKeyword = '';
     renderSummonModalView();
   };
+  window.openSummonTargetDeptModal = window.openSummonTargetModal;
 
   function renderSummonModalView() {
     const body = renderSummonModalContent();
