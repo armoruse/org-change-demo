@@ -1,0 +1,3652 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>組織異動工作台</title>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --success: #059669;
+      --warning: #d97706;
+      --danger: #dc2626;
+      --bg: #f8fafc;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --target-border: #7c3aed;
+      --target-bg: #faf5ff;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Microsoft JhengHei", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 14px;
+      overflow-x: hidden;
+    }
+    button, input, select, textarea { font: inherit; }
+    button { cursor: pointer; border: none; outline: none; transition: all 0.15s; }
+
+    /* Header */
+    header {
+      height: 52px;
+      background: #ffffff;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      gap: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-weight: 800;
+      font-size: 16.5px;
+      color: #1e3a8a;
+      white-space: nowrap;
+    }
+    .brand-icon {
+      background: var(--primary);
+      color: white;
+      width: 27px; height: 27px; border-radius: 6px;
+      display: grid;
+      place-items: center;
+      font-weight: 900;
+      font-size: 13px;
+    }
+
+    /* Role Box */
+    .role-box {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      padding: 3px 8px;
+      border-radius: 18px;
+    }
+    .role-label { font-size: 12.5px; font-weight: 700; color: #1e40af; }
+    .role-select {
+      background: transparent;
+      border: none;
+      font-size: 12.5px;
+      font-weight: 700;
+      color: #1d4ed8;
+      cursor: pointer;
+    }
+
+    /* Focus Dept Box */
+    .focus-box {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      padding: 3px 9px;
+      border-radius: 6px;
+    }
+    .focus-label { font-size: 12.5px; font-weight: 700; color: #475569; }
+    .focus-select {
+      border: none;
+      font-weight: 800;
+      color: #0f172a;
+      font-size: 13.5px;
+      background: transparent;
+      cursor: pointer;
+    }
+
+    .top-actions {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Common Buttons */
+    .btn-action {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      color: #334155;
+      padding: 5px 11px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+      white-space: nowrap;
+    }
+    .btn-action:hover {
+      background: #f8fafc;
+      border-color: #94a3b8;
+      color: #0f172a;
+    }
+    .btn-action.primary {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #ffffff;
+    }
+    .btn-action.primary:hover {
+      background: var(--primary-hover);
+    }
+    .btn-action.danger {
+      color: var(--danger);
+      border-color: #fca5a5;
+      background: #fef2f2;
+    }
+    .btn-action.danger:hover {
+      background: #fee2e2;
+    }
+
+    .badge-count {
+      background: #ef4444;
+      color: white;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 1px 6px;
+      border-radius: 10px;
+    }
+
+    /* Sub-bar: Breadcrumb & Group Visibility Pills */
+    .sub-bar {
+      height: 46px;
+      background: #f1f5f9;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      gap: 12px;
+      overflow-x: auto;
+      overflow-y: hidden;
+    }
+    .hierarchy-tag {
+      font-size: 13.5px;
+      font-weight: 800;
+      color: #475569;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+      padding-right: 12px;
+      border-right: 1px solid #cbd5e1;
+    }
+
+    /* 商用研一部 按鈕化：可按下去隱藏全組別，或彈起顯示全組別 */
+    .dept-toggle-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 10px;
+      font-size: 13px;
+      font-weight: 800;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      user-select: none;
+      outline: none;
+    }
+    /* 彈起狀態：顯示全組別 (立體凸起白底藍字藍框) */
+    .dept-toggle-btn.raised {
+      background: #ffffff;
+      color: #1d4ed8;
+      border: 1.5px solid #3b82f6;
+      box-shadow: 0 2px 4px rgba(37, 99, 235, 0.18), 0 1px 2px rgba(0,0,0,0.06);
+      transform: translateY(0);
+    }
+    .dept-toggle-btn.raised:hover {
+      background: #eff6ff;
+      border-color: #2563eb;
+      box-shadow: 0 3px 6px rgba(37, 99, 235, 0.25);
+    }
+    .dept-toggle-btn.raised:active {
+      transform: translateY(1px);
+    }
+    /* 按下去狀態：隱藏全組別 (凹陷按壓灰色底) */
+    .dept-toggle-btn.pressed {
+      background: #e2e8f0;
+      color: #64748b;
+      border: 1.5px solid #cbd5e1;
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.15);
+      transform: translateY(1px);
+    }
+    .dept-toggle-btn.pressed:hover {
+      background: #cbd5e1;
+      color: #475569;
+    }
+    .dept-toggle-badge {
+      font-size: 11px;
+      font-weight: 800;
+      padding: 2px 7px;
+      border-radius: 4px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.15s ease;
+    }
+    .dept-toggle-badge.expanded {
+      background: #eff6ff;
+      color: #1d4ed8;
+      border: 1px solid #bfdbfe;
+    }
+    .dept-toggle-badge.collapsed {
+      background: #f8fafc;
+      color: #64748b;
+      border: 1px solid #cbd5e1;
+    }
+
+    /* Group Visibility Pills: 方框加陰影，無icon無組長名 */
+    .pills-container {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      overflow-y: hidden;
+    }
+    .pill-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 5px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+    .pill-btn.visible {
+      background: #ffffff;
+      color: #1e293b;
+      border: 1px solid #cbd5e1;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.05);
+      transform: translateY(-1px);
+    }
+    .pill-btn.visible:hover {
+      box-shadow: 0 4px 8px rgba(0,0,0,0.12);
+      transform: translateY(-2px);
+      border-color: #94a3b8;
+    }
+    .pill-btn.hidden {
+      background: #e2e8f0;
+      color: #94a3b8;
+      border: 1px solid #cbd5e1;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.08);
+      transform: translateY(1px);
+      opacity: 0.7;
+    }
+
+    /* Workbench Main Layout */
+    .workbench-layout {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      height: calc(100vh - 98px);
+    }
+    .canvas-scroll {
+      padding: 16px;
+      overflow-x: auto;
+      overflow-y: auto;
+      height: 100%;
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+    }
+
+    /* Department Section Card */
+    .dept-col {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      padding: 12px 14px;
+      display: inline-flex;
+      flex-direction: column;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+      max-height: calc(100vh - 130px);
+    }
+    .dept-col.target-dept {
+      border: 2px dashed var(--target-border);
+      background: var(--target-bg);
+    }
+    .dept-col-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #f1f5f9;
+      gap: 14px;
+    }
+    .dept-col-title {
+      font-size: 15.5px;
+      font-weight: 800;
+      color: #0f172a;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .dept-col-tools {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .editable-title {
+      cursor: pointer;
+      border-radius: 4px;
+      padding: 2px 5px;
+      transition: all 0.15s;
+    }
+    .editable-title:hover {
+      background: #eff6ff;
+      color: #2563eb;
+      text-decoration: underline;
+    }
+
+    /* Groups Container: 橫向並排卡片 */
+    .groups-cards-container {
+      display: flex;
+      flex-direction: row;
+      gap: 12px;
+      align-items: stretch;
+      overflow-x: auto;
+      overflow-y: hidden;
+      padding: 4px 2px 8px 2px;
+      min-height: 280px;
+    }
+
+    /* Group Card */
+    .group-card {
+      min-width: 220px;
+      width: 230px;
+      flex: 0 0 auto;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+      transition: all 0.15s;
+      max-height: calc(100vh - 215px);
+    }
+    .group-card.drag-over {
+      border: 2px dashed #2563eb !important;
+      background: #eff6ff !important;
+    }
+    .group-card.foreign-group-card {
+      background: #faf5ff;
+      border-color: #ddd6fe;
+    }
+
+    /* Group Card Top */
+    .group-card-top {
+      padding: 8px 10px 6px 10px;
+      border-bottom: 1px solid #e2e8f0;
+      flex-shrink: 0;
+    }
+    .group-card-name-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 4px;
+    }
+    .group-card-title {
+      font-weight: 800;
+      font-size: 14px;
+      color: #1e293b;
+    }
+    .group-card-actions {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* 組長方塊：點選整列直接換組長 */
+    .group-leader-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      color: #334155;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.15s;
+    }
+    .group-leader-row:hover {
+      background: #e2e8f0;
+      border-color: #cbd5e1;
+      color: #1d4ed8;
+    }
+    .group-leader-row.foreign {
+      background: #f3e8ff;
+      border-color: #d8b4fe;
+      color: #6b21a8;
+      cursor: default;
+    }
+
+    /* Group Card Body: 直向直式排列 */
+    .group-card-body {
+      padding: 6px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      overflow-y: auto;
+      overflow-x: hidden;
+      flex: 1;
+      min-height: 120px;
+    }
+
+    /* Person Item (直式成員卡片，組長排最上方時亮色標示) */
+    .person-item {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 6px 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: grab;
+      user-select: none;
+      transition: all 0.15s;
+    }
+    .person-item.is-leader-item {
+      background: #f0f7ff;
+      border-color: #bfdbfe;
+    }
+    .person-item:hover {
+      border-color: #93c5fd;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    /* Person Item: 乾淨俐落卡片，選取時顯著藍框，異動時黃色底色 */
+    .person-item.selected {
+      background: #eff6ff !important;
+      border: 2px solid #2563eb !important;
+      box-shadow: 0 0 0 1px #2563eb, 0 2px 6px rgba(37,99,235,0.15) !important;
+    }
+    .person-item.is-changed {
+      background: #fef9c3 !important;
+      border: 1.5px solid #eab308 !important;
+    }
+    .person-item.is-changed:hover {
+      background: #fef08a !important;
+      border-color: #ca8a04 !important;
+    }
+    .person-item.is-changed.selected {
+      background: #fef9c3 !important;
+      border: 2px solid #2563eb !important;
+      box-shadow: 0 0 0 1px #2563eb, 0 2px 6px rgba(37,99,235,0.2) !important;
+    }
+    .person-item-left {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      flex: 1;
+      overflow: hidden;
+    }
+    .person-avatar {
+      width: 26px; height: 26px;
+      border-radius: 50%;
+      background: #e2e8f0;
+      color: #334155;
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      font-size: 12px;
+      flex-shrink: 0;
+    }
+    .person-avatar.leader {
+      background: #dbeafe;
+      color: #1e40af;
+      border: 1.5px solid #3b82f6;
+    }
+    .person-info {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .person-name-row {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .person-name {
+      font-weight: 800;
+      font-size: 14px;
+      color: #0f172a;
+      white-space: nowrap;
+    }
+    .person-id-tag {
+      font-size: 12px;
+      color: #64748b;
+      font-family: monospace;
+    }
+    .person-cat-badge {
+      font-size: 11px;
+      padding: 1px 5px;
+      border-radius: 3px;
+      background: #f1f5f9;
+      color: #475569;
+      font-weight: 700;
+    }
+    .person-title-row {
+      font-size: 12.5px;
+      color: #334155;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .btn-edit-person {
+      color: #94a3b8;
+      background: transparent;
+      padding: 3px;
+      border-radius: 4px;
+      font-size: 12px;
+      display: grid;
+      place-items: center;
+    }
+    .btn-edit-person:hover {
+      color: #2563eb;
+      background: #eff6ff;
+    }
+
+    .mini-icon-btn {
+      color: #94a3b8;
+      background: transparent;
+      padding: 2px 4px;
+      border-radius: 4px;
+      font-size: 11.5px;
+    }
+    .mini-icon-btn:hover {
+      color: #2563eb;
+      background: #dbeafe;
+    }
+
+    .target-drop-hint {
+      padding: 20px 8px;
+      text-align: center;
+      color: #7c3aed;
+      font-size: 12px;
+      font-weight: 700;
+      border: 1.5px dashed #c4b5fd;
+      border-radius: 6px;
+      background: #faf5ff;
+    }
+
+    /* Right Drawer */
+    .changes-drawer {
+      background: #ffffff;
+      border-left: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      padding: 14px;
+      overflow-y: auto;
+    }
+    .drawer-top-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .drawer-title { font-weight: 800; font-size: 15px; color: #0f172a; }
+
+    .diff-list {
+      flex: 1;
+      overflow-y: auto;
+      margin-bottom: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .diff-card {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 8px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+    }
+    .diff-card-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .diff-badge {
+      font-size: 10.5px;
+      font-weight: 800;
+      padding: 1px 6px;
+      border-radius: 4px;
+      background: #dbeafe;
+      color: #1e40af;
+    }
+    .diff-name { font-weight: 800; font-size: 13.5px; color: #0f172a; }
+    
+    .diff-val-from {
+      color: #dc2626;
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 11.5px;
+      font-weight: 600;
+      display: inline-block;
+    }
+    .diff-val-to {
+      color: #059669;
+      background: #ecfdf5;
+      border: 1px solid #a7f3d0;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 11.5px;
+      font-weight: 700;
+      display: inline-block;
+    }
+    .diff-arrow { color: #64748b; font-size: 11px; margin: 0 2px; }
+    .diff-undo {
+      color: #94a3b8;
+      background: transparent;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .diff-undo:hover { color: #dc2626; }
+
+    .drawer-bottom {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      border-top: 1px solid #f1f5f9;
+      padding-top: 10px;
+    }
+    .btn-submit-main {
+      background: var(--primary);
+      color: white;
+      font-weight: 800;
+      padding: 9px;
+      border-radius: 7px;
+      font-size: 14px;
+      text-align: center;
+    }
+    .btn-submit-main:hover { background: var(--primary-hover); }
+
+    /* Toast */
+    .toast-pill {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #0f172a;
+      color: #ffffff;
+      padding: 7px 16px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      display: none;
+      z-index: 1000;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.45);
+      backdrop-filter: blur(2px);
+      display: none;
+      place-items: center;
+      z-index: 200;
+      padding: 16px;
+    }
+    .modal-overlay.open { display: grid; }
+    .modal-card {
+      background: #ffffff;
+      border-radius: 12px;
+      max-width: 680px;
+      width: 100%;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
+      overflow: hidden;
+    }
+    .modal-card-head {
+      padding: 12px 18px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .modal-card-body {
+      padding: 18px;
+      overflow-y: auto;
+      flex: 1;
+    }
+    .modal-card-foot {
+      padding: 12px 18px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+      background: #f8fafc;
+    }
+
+    /* Form controls in modal */
+    .form-group {
+      margin-bottom: 12px;
+    }
+    .form-label {
+      font-size: 13px;
+      font-weight: 700;
+      color: #334155;
+      margin-bottom: 4px;
+      display: block;
+    }
+    .form-control {
+      width: 100%;
+      padding: 6px 10px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      font-size: 13px;
+      background: #ffffff;
+    }
+
+    /* Grid selector */
+    .grid-select {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 8px;
+    }
+    .grid-select-btn {
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #cbd5e1;
+      background: #ffffff;
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.15s;
+    }
+    .grid-select-btn:hover {
+      border-color: var(--primary);
+      background: #eff6ff;
+    }
+
+    
+
+    /* Floating Batch Action Bar */
+    .batch-action-bar {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #0f172a;
+      color: #ffffff;
+      padding: 10px 20px;
+      border-radius: 40px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.1);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      z-index: 999;
+      font-size: 13.5px;
+      white-space: nowrap;
+      animation: floatUp 0.2s ease-out;
+    }
+    @keyframes floatUp {
+      from { transform: translate(-50%, 20px); opacity: 0; }
+      to { transform: translate(-50%, 0); opacity: 1; }
+    }
+    .batch-badge {
+      background: #2563eb;
+      color: white;
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-weight: 800;
+      font-size: 13px;
+    }
+    .batch-btn {
+      background: #334155;
+      color: #f8fafc;
+      border: 1px solid #475569;
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 12.5px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.15s;
+    }
+    .batch-btn:hover {
+      background: #475569;
+      color: white;
+    }
+    .batch-btn.primary {
+      background: #2563eb;
+      border-color: #3b82f6;
+    }
+    .batch-btn.primary:hover {
+      background: #1d4ed8;
+    }
+    .batch-select {
+      background: #1e293b;
+      color: #f8fafc;
+      border: 1px solid #475569;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 12.5px;
+      max-width: 220px;
+    }
+
+    /* Marquee Selection Box */
+    .selection-marquee-box {
+      position: fixed;
+      border: 1.5px dashed #2563eb;
+      background: rgba(37, 99, 235, 0.12);
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+  </style>
+</head>
+<body>
+
+    <!-- DEMO Top Notice Bar -->
+    <div style="background:linear-gradient(90deg, #d97706, #b45309); color:#ffffff; padding:8px 20px; font-size:13px; font-weight:700; display:flex; align-items:center; justify-content:space-between; box-shadow:0 2px 5px rgba(0,0,0,0.2); position:relative; z-index:9999;">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span style="background:#ffffff; color:#b45309; padding:2px 10px; border-radius:12px; font-size:12px; font-weight:800; letter-spacing:0.5px;">🧪 DEMO 示範測試版</span>
+        <span>⚠️ 本環境為系統模擬假資料（隨機生成同仁名冊 · 4大單位 8部門架構），僅供長官架構檢視與操作示範，非正式異動環境。</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span style="background:rgba(255,255,255,0.22); padding:3px 10px; border-radius:6px; font-size:11.5px; font-weight:600;">四個事業處：直屬 · 線上 · 商用 · 國外公司</span>
+      </div>
+    </div>
+
+  <!-- Header -->
+  <header>
+    <div class="brand">
+      <div class="brand-icon">IGS</div>
+      <span>組織異動工作台</span>
+    </div>
+
+    <!-- Login Identity Badge: Clickable Selector (切換 HR 或 各部門主管) -->
+    <div class="role-box" style="background:#eff6ff; border:1px solid #93c5fd; padding:3px 8px; border-radius:18px; display:inline-flex; align-items:center; gap:4px;" title="點擊切換登入身分">
+      <span class="role-label" style="font-weight:700; color:#1e40af; font-size:12.5px; white-space:nowrap;">👤 登入身分:</span>
+      <select id="selLoginRole" onchange="onRoleChange(this.value)" style="border:none; background:transparent; font-size:12.5px; font-weight:800; color:#1d4ed8; cursor:pointer; outline:none; padding:2px 4px;">
+      </select>
+    </div>
+
+    <!-- Focus Dept (只有 HR 才顯示) -->
+    <div class="focus-box" id="focusBoxContainer">
+      <span class="focus-label">當前部門:</span>
+      <select id="selFocusDept" class="focus-select"></select>
+    </div>
+
+    <!-- Add Department Button -->
+    <button class="btn-action" onclick="openAddDeptModal()">
+      <span>➕ 新增部門</span>
+    </button>
+
+    <!-- Summon Multiple Target Departments -->
+    <button class="btn-action" id="btnSummonTarget">
+      <span>🎯 叫出目標部門</span>
+    </button>
+
+    <!-- Quick Search & Edit Person (搜尋同仁) -->
+    <button class="btn-action" onclick="openQuickSearchPersonModal()" style="border-color:#3b82f6; background:#eff6ff; color:#1d4ed8; font-weight:700;">
+      <span>🔍 搜尋同仁</span>
+    </button>
+
+    <div class="top-actions">
+      <!-- Export Org Chart (PDF 預覽列印) -->
+      <button class="btn-action" onclick="openExportOrgModal()">
+        <span>📊 匯出組織圖</span>
+      </button>
+
+      <!-- Revert to Initial -->
+      <button class="btn-action danger" onclick="revertAllToInitial()">
+        <span>🔄 還原初始</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Sub-bar: Breadcrumb, Batch Toggle & Group Visibility Pills -->
+  <div class="sub-bar">
+    <div class="hierarchy-tag" id="hierarchyBreadcrumb">
+      <span id="txtDivName">商用遊戲機事業處</span>
+      <span style="color:#cbd5e1;">➔</span>
+      <!-- 商用研一部 按鈕化：資料夾 icon 展開/收攏 -->
+      <button type="button" id="btnDeptGroupToggle" class="dept-toggle-btn raised" onclick="toggleCurrentDeptAllGroups()" title="點擊切換展開/收攏">
+        <span id="txtDeptName" style="font-weight:800; font-size:13.5px;">商用研一部</span>
+        <span id="txtDeptGroupIndicator" style="font-size:14px; margin-left:2px;">📂</span>
+      </button>
+    </div>
+
+    <!-- Group Visibility Toggle Pills: 方框加陰影，無icon無組長名 -->
+    <div class="pills-container" id="groupPillsContainer"></div>
+
+    <button class="btn-action" style="padding:3px 8px; font-size:12px; margin-left:auto; flex-shrink:0;" onclick="quickAddGroup(focusDeptId)">
+      ＋ 新增組別
+    </button>
+  </div>
+
+  <!-- Main Workbench Layout -->
+  <div class="workbench-layout">
+    <!-- Canvas: Source Dept + Target Depts -->
+    <div class="canvas-scroll" id="canvasScroll">
+      <!-- Left: Source Dept -->
+      <div class="dept-col" id="sourceDeptCol"></div>
+
+      <!-- Multiple Target Depts -->
+      <div id="targetDeptsArea" style="display:flex; gap:16px; align-items:flex-start;"></div>
+    </div>
+
+    <!-- Right Drawer: Changes List -->
+    <aside class="changes-drawer">
+      <div class="drawer-top-row">
+        <span class="drawer-title">異動對照清單</span>
+        <span class="badge-count" id="badgeChangesCount">0 項</span>
+      </div>
+
+      <div style="margin-bottom:8px;">
+        <label style="font-size: 13px; font-weight:700; color:#64748b;">📅 生效日期</label>
+        <input type="date" id="effectiveDate" class="form-control" style="margin-top:2px;">
+      </div>
+
+      <!-- Diff List -->
+      <div class="diff-list" id="diffListContainer">
+        <div style="color:#94a3b8; font-size: 13px; text-align:center; padding:30px 10px;">
+          拖曳同仁或點 ✏️ 設定職務<br>異動即刻自動對照
+        </div>
+      </div>
+
+      <div class="drawer-bottom">
+        <button class="btn-submit-main" id="btnFinalReview">
+          確認異動內容 →
+        </button>
+        <button class="btn-action" id="btnSaveDraftQuick" style="justify-content:center;">
+          💾 儲存為草稿
+        </button>
+      </div>
+    </aside>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast-pill" id="toastPill"></div>
+
+  <!-- Modal -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal-card">
+      <div class="modal-card-head">
+        <b id="modalTitle" style="font-size: 16px;">對話框</b>
+        <button class="mini-icon-btn" onclick="closeModal()" style="font-size:16px;">✕</button>
+      </div>
+      <div class="modal-card-body" id="modalBody"></div>
+      <div class="modal-card-foot" id="modalFoot"></div>
+    </div>
+  </div>
+
+  <script>
+  /* =========================================================
+   * 1. WTW 職涯架構與三級聯動資料庫 (專業角色無「專員」二字 - Requirement 4)
+   * ========================================================= */
+  const careerTree = {
+    '軟體開發': {
+      '前端開發': ['遊戲前端開發', '網頁前端開發', '行動應用程式開發'],
+      '後端開發': ['伺服器開發', '網頁後端開發'],
+      '資料科學': ['AI應用', '數據分析', '資料庫架構', '機率工程', '數據工程'],
+      '電子電路': ['韌體設計']
+    },
+    '多媒體開發': {
+      '2D美術': ['2D遊戲設計', '原畫設定', '行銷素材設計', 'UI介面', '動作特效編輯'],
+      '3D美術': ['3D遊戲設計'],
+      '影片製作': ['影片製作', '影片後製'],
+      '音樂音效': ['音樂音效']
+    },
+    '產品企劃': {
+      '產品企劃': ['產品企劃'],
+      '產品企劃商務業務通路': ['產品企劃_商務_業務_通路'],
+      '遊戲營運': ['上線營運', '活動設計和營運'],
+      '遊戲設計': ['遊戲設計', '平台規劃', '數值設定'],
+      '行銷': ['數位行銷', '社群行銷', '行銷企劃'],
+      '資料科學': ['機率工程']
+    },
+    '硬體開發': {
+      '電子電路': ['電子電路設計', 'PCB layout', '韌體設計'],
+      '機構設計': ['機構設計', '工業設計']
+    },
+    '營運支援': {
+      '營運支援': ['營運支援']
+    },
+    '組織企劃': {
+      '組織企劃': ['組織企劃']
+    },
+    '管理職涯': {
+      '管理職涯': ['管理職涯']
+    }
+  };
+
+  // IGS 正式專業職稱選項 (拿掉 (一)(二)(三) - Requirement 2)
+  const officialProfTitles = [
+    '高級工程師專員',
+    '工程師專員',
+    '助理工程師專員',
+    '資深主任',
+    '主任',
+    '技術員助理',
+    '定期人員(時薪制)'
+  ];
+
+  const officialMgmtTitles = [
+    '無', '組長', '副理', '資深副理', '經理', '資深經理', '協理', '副總經理', '總經理'
+  ];
+
+  // 8 大正式人員類別 (公司正式代碼 - Requirement 3)
+  const officialCategories = [
+    '研發',
+    '研發共用',
+    '工程',
+    '工程共用',
+    '直接',
+    '間接',
+    '管理',
+    '銷售'
+  ];
+
+  function cleanTitle(t) {
+    return String(t || '').replace(/\([一二三123]\)/g, '').trim();
+  }
+
+  const baseOrg = [
+  {
+    "id": "DIV_DIR",
+    "code": "D300",
+    "name": "總部直屬事業處",
+    "shortName": "直屬",
+    "depts": [
+      {
+        "id": "DEP_DIR_01",
+        "code": "3100",
+        "name": "經營管理部",
+        "groups": [
+          {
+            "id": "DEP_DIR_01_G_MGR",
+            "code": "0000",
+            "name": "主管",
+            "manager": "DM1001"
+          },
+          {
+            "id": "DEP_DIR_01_G_01",
+            "code": "0100",
+            "name": "總務行政組",
+            "manager": "DM1003"
+          },
+          {
+            "id": "DEP_DIR_01_G_02",
+            "code": "0200",
+            "name": "人力資源組",
+            "manager": "DM1011"
+          },
+          {
+            "id": "DEP_DIR_01_G_03",
+            "code": "0300",
+            "name": "財務會計組",
+            "manager": "DM1018"
+          },
+          {
+            "id": "DEP_DIR_01_G_04",
+            "code": "0400",
+            "name": "法務智財組",
+            "manager": "DM1025"
+          },
+          {
+            "id": "DEP_DIR_01_G_05",
+            "code": "0500",
+            "name": "資訊安全組",
+            "manager": "DM1032"
+          }
+        ]
+      },
+      {
+        "id": "DEP_DIR_02",
+        "code": "3200",
+        "name": "策略企劃部",
+        "groups": [
+          {
+            "id": "DEP_DIR_02_G_MGR",
+            "code": "0000",
+            "name": "主管",
+            "manager": "DM1039"
+          },
+          {
+            "id": "DEP_DIR_02_G_01",
+            "code": "0100",
+            "name": "經營策略組",
+            "manager": "DM1041"
+          },
+          {
+            "id": "DEP_DIR_02_G_02",
+            "code": "0200",
+            "name": "專案推展組",
+            "manager": "DM1047"
+          },
+          {
+            "id": "DEP_DIR_02_G_03",
+            "code": "0300",
+            "name": "商業數據組",
+            "manager": "DM1053"
+          },
+          {
+            "id": "DEP_DIR_02_G_04",
+            "code": "0400",
+            "name": "公共關係組",
+            "manager": "DM1062"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "DIV_ON",
+    "code": "D200",
+    "name": "線上遊戲事業處",
+    "shortName": "線上",
+    "depts": [
+      {
+        "id": "DEP_ON_01",
+        "code": "2100",
+        "name": "線上研一部",
+        "groups": [
+          {
+            "id": "DEP_ON_01_G_MGR",
+            "code": "0000",
+            "name": "主管",
+            "manager": "DM1069"
+          },
+          {
+            "id": "DEP_ON_01_G_01",
+            "code": "0100",
+            "name": "核心研發組",
+            "manager": "DM1071"
+          },
+          {
+            "id": "DEP_ON_01_G_02",
+            "code": "0200",
+            "name": "前端開發組",
+            "manager": "DM1080"
+          },
+          {
+            "id": "DEP_ON_01_G_03",
+            "code": "0300",
+            "name": "伺服架構組",
+            "manager": "DM1089"
+          },
+          {
+            "id": "DEP_ON_01_G_04",
+            "code": "0400",
+            "name": "遊戲企劃組",
+            "manager": "DM1098"
+          },
+          {
+            "id": "DEP_ON_01_G_05",
+            "code": "0500",
+            "name": "視覺美術組",
+            "manager": "DM1106"
+          },
+          {
+            "id": "DEP_ON_01_G_06",
+            "code": "0600",
+            "name": "測試驗證組",
+            "manager": "DM1113"
+          }
+        ]
+      },
+      {
+        "id": "DEP_ON_02",
+        "code": "2200",
+        "name": "線上研二部",
+        "groups": [
+          {
+            "id": "DEP_ON_02_G_MGR",
+            "code": "0000",
+            "name": "主管",
+            "manager": "DM1120"
+          },
+          {
+            "id": "DEP_ON_02_G_01",
+            "code": "0100",
+            "name": "互動遊戲組",
+            "manager": "DM1122"
+          },
+          {
+            "id": "DEP_ON_02_G_02",
+            "code": "0200",
+            "name": "平台研發組",
+            "manager": "DM1130"
+          },
+          {
+            "id": "DEP_ON_02_G_03",
+            "code": "0300",
+            "name": "3D動效組",
+            "manager": "DM1138"
+          },
+          {
+            "id": "DEP_ON_02_G_04",
+            "code": "0400",
+            "name": "產品企劃組",
+            "manager": "DM1144"
+          },
+          {
+            "id": "DEP_ON_02_G_05",
+            "code": "0500",
+            "name": "系統運營組",
+            "manager": "DM1150"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "DIV_COM",
+    "code": "D100",
+    "name": "商用遊戲機事業處",
+    "shortName": "商用",
+    "depts": [
+      {
+        "id": "DEP_COM_01",
+        "code": "1100",
+        "name": "商用研一部",
+        "groups": [
+          {
+            "id": "DEP_COM_01_G_MGR",
+            "code": "0000",
+            "name": "主管",
+            "manager": "DM1159"
+          },
+          {
+            "id": "DEP_COM_01_G_01",
+            "code": "0100",
+            "name": "系統軟體組",
+            "manager": "DM1161"
+          },
+          {
+            "id": "DEP_COM_01_G_02",
+            "code": "0200",
+            "name": "遊戲機制組",
+            "manager": "DM1167"
+          },
+          {
+            "id": "DEP_COM_01_G_03",
+            "code": "0300",
+            "name": "機構硬體組",
+            "manager": "DM1176"
+          },
+          {
+            "id": "DEP_COM_01_G_04",
+            "code": "0400",
+            "name": "韌體研發組",
+            "manager": "DM1185"
+          },
+          {
+            "id": "DEP_COM_01_G_05",
+            "code": "0500",
+            "name": "框體結構組",
+            "manager": "DM1192"
+          },
+          {
+            "id": "DEP_COM_01_G_06",
+            "code": "0600",
+            "name": "視覺設計組",
+            "manager": "DM1199"
+          },
+          {
+            "id": "DEP_COM_01_G_07",
+            "code": "0700",
+            "name": "品保認證組",
+            "manager": "DM1206"
+          }
+        ]
+      },
+      {
+        "id": "DEP_COM_02",
+        "code": "1200",
+        "name": "商用研二部",
+        "groups": [
+          {
+            "id": "DEP_COM_02_G_MGR",
+            "code": "0000",
+            "name": "主管",
+            "manager": "DM1214"
+          },
+          {
+            "id": "DEP_COM_02_G_01",
+            "code": "0100",
+            "name": "商業應用組",
+            "manager": "DM1216"
+          },
+          {
+            "id": "DEP_COM_02_G_02",
+            "code": "0200",
+            "name": "嵌入式控制組",
+            "manager": "DM1222"
+          },
+          {
+            "id": "DEP_COM_02_G_03",
+            "code": "0300",
+            "name": "遊戲數理組",
+            "manager": "DM1230"
+          },
+          {
+            "id": "DEP_COM_02_G_04",
+            "code": "0400",
+            "name": "界面動畫組",
+            "manager": "DM1237"
+          },
+          {
+            "id": "DEP_COM_02_G_05",
+            "code": "0500",
+            "name": "測試工程組",
+            "manager": "DM1243"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "DIV_GLO",
+    "code": "D400",
+    "name": "海外跨國事業處",
+    "shortName": "國外公司",
+    "depts": [
+      {
+        "id": "DEP_GLO_01",
+        "code": "4100",
+        "name": "國際營運部",
+        "groups": [
+          {
+            "id": "DEP_GLO_01_G_MGR",
+            "code": "0000",
+            "name": "主管",
+            "manager": "DM1250"
+          },
+          {
+            "id": "DEP_GLO_01_G_01",
+            "code": "0100",
+            "name": "日本市場組",
+            "manager": "DM1252"
+          },
+          {
+            "id": "DEP_GLO_01_G_02",
+            "code": "0200",
+            "name": "東南亞營運組",
+            "manager": "DM1260"
+          },
+          {
+            "id": "DEP_GLO_01_G_03",
+            "code": "0300",
+            "name": "北美拓展組",
+            "manager": "DM1267"
+          },
+          {
+            "id": "DEP_GLO_01_G_04",
+            "code": "0400",
+            "name": "在地化翻譯組",
+            "manager": "DM1275"
+          },
+          {
+            "id": "DEP_GLO_01_G_05",
+            "code": "0500",
+            "name": "跨境客服組",
+            "manager": "DM1282"
+          }
+        ]
+      },
+      {
+        "id": "DEP_GLO_02",
+        "code": "4200",
+        "name": "海外技術部",
+        "groups": [
+          {
+            "id": "DEP_GLO_02_G_MGR",
+            "code": "0000",
+            "name": "主管",
+            "manager": "DM1290"
+          },
+          {
+            "id": "DEP_GLO_02_G_01",
+            "code": "0100",
+            "name": "雲端架構組",
+            "manager": "DM1292"
+          },
+          {
+            "id": "DEP_GLO_02_G_02",
+            "code": "0200",
+            "name": "跨境網路組",
+            "manager": "DM1300"
+          },
+          {
+            "id": "DEP_GLO_02_G_03",
+            "code": "0300",
+            "name": "海外SDK組",
+            "manager": "DM1309"
+          },
+          {
+            "id": "DEP_GLO_02_G_04",
+            "code": "0400",
+            "name": "全球資安組",
+            "manager": "DM1318"
+          },
+          {
+            "id": "DEP_GLO_02_G_05",
+            "code": "0500",
+            "name": "國際維運組",
+            "manager": "DM1327"
+          }
+        ]
+      }
+    ]
+  }
+];
+
+  // 全公司 1,129 位同仁正式名冊 (已去識別化：王O名、鄭O)
+  const basePeopleRaw = [["DM1001", "徐○民", "資深經理", "部長", "DEP_DIR_01_G_MGR", "", "09:00–18:00", "DM01", "管理", "管理職涯", "管理職涯", "管理職涯"], ["DM1002", "鄭○慧", "經理", "副部長", "DEP_DIR_01_G_MGR", "", "09:00–18:00", "DM01", "管理", "管理職涯", "管理職涯", "管理職涯"], ["DM1003", "潘○智", "資深主任", "組長", "DEP_DIR_01_G_01", "", "09:00–18:00", "DM01", "研發", "管理職涯", "管理職涯", "管理職涯"], ["DM1004", "鄭○瑜", "一般專員", "無", "DEP_DIR_01_G_01", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1005", "郭○恩", "主任", "無", "DEP_DIR_01_G_01", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1006", "游○陽", "主任", "無", "DEP_DIR_01_G_01", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1007", "蔡○峰", "管理師", "無", "DEP_DIR_01_G_01", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1008", "胡○熙", "管理師", "無", "DEP_DIR_01_G_01", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1009", "江○智", "高級專員", "無", "DEP_DIR_01_G_01", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1010", "鄭○慧", "管理師", "無", "DEP_DIR_01_G_01", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1011", "簡○欣", "主任", "組長", "DEP_DIR_01_G_02", "", "09:00–18:00", "DM01", "研發", "管理職涯", "管理職涯", "管理職涯"], ["DM1012", "許○銘", "一般專員", "無", "DEP_DIR_01_G_02", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1013", "李○翔", "一般專員", "無", "DEP_DIR_01_G_02", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1014", "潘○豪", "資深專員", "無", "DEP_DIR_01_G_02", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1015", "鄭○德", "資深主任", "無", "DEP_DIR_01_G_02", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1016", "邱○語", "高級專員", "無", "DEP_DIR_01_G_02", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1017", "王○銘", "主任", "無", "DEP_DIR_01_G_02", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1018", "高○佑", "副理", "組長", "DEP_DIR_01_G_03", "", "09:00–18:00", "DM01", "研發", "管理職涯", "管理職涯", "管理職涯"], ["DM1019", "林○晴", "一般專員", "無", "DEP_DIR_01_G_03", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1020", "蘇○涵", "高級專員", "無", "DEP_DIR_01_G_03", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1021", "簡○揚", "高級專員", "無", "DEP_DIR_01_G_03", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1022", "李○銘", "資深專員", "無", "DEP_DIR_01_G_03", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1023", "胡○毅", "主任", "無", "DEP_DIR_01_G_03", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1024", "林○穎", "一般專員", "無", "DEP_DIR_01_G_03", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1025", "林○熙", "主任", "組長", "DEP_DIR_01_G_04", "", "09:00–18:00", "DM01", "研發", "管理職涯", "管理職涯", "管理職涯"], ["DM1026", "高○齊", "高級專員", "無", "DEP_DIR_01_G_04", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1027", "高○辰", "資深主任", "無", "DEP_DIR_01_G_04", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1028", "陳○良", "一般專員", "無", "DEP_DIR_01_G_04", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1029", "陳○毅", "一般專員", "無", "DEP_DIR_01_G_04", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1030", "何○婷", "主任", "無", "DEP_DIR_01_G_04", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1031", "蘇○豪", "資深專員", "無", "DEP_DIR_01_G_04", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1032", "陳○樂", "副理", "組長", "DEP_DIR_01_G_05", "", "09:00–18:00", "DM01", "研發", "管理職涯", "管理職涯", "管理職涯"], ["DM1033", "王○澤", "資深專員", "無", "DEP_DIR_01_G_05", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1034", "林○凱", "主任", "無", "DEP_DIR_01_G_05", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1035", "胡○涵", "主任", "無", "DEP_DIR_01_G_05", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1036", "江○良", "資深專員", "無", "DEP_DIR_01_G_05", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1037", "潘○瑜", "管理師", "無", "DEP_DIR_01_G_05", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1038", "郭○婷", "高級專員", "無", "DEP_DIR_01_G_05", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1039", "葉○德", "資深經理", "部長", "DEP_DIR_02_G_MGR", "", "09:00–18:00", "DM01", "管理", "管理職涯", "管理職涯", "管理職涯"], ["DM1040", "江○翔", "經理", "副部長", "DEP_DIR_02_G_MGR", "", "09:00–18:00", "DM01", "管理", "管理職涯", "管理職涯", "管理職涯"], ["DM1041", "羅○晴", "副理", "組長", "DEP_DIR_02_G_01", "", "09:00–18:00", "DM01", "研發", "管理職涯", "管理職涯", "管理職涯"], ["DM1042", "彭○陽", "管理師", "無", "DEP_DIR_02_G_01", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1043", "郭○良", "高級專員", "無", "DEP_DIR_02_G_01", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1044", "周○儒", "資深專員", "無", "DEP_DIR_02_G_01", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1045", "呂○雯", "管理師", "無", "DEP_DIR_02_G_01", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1046", "謝○佑", "主任", "無", "DEP_DIR_02_G_01", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1047", "劉○銘", "主任", "組長", "DEP_DIR_02_G_02", "", "09:00–18:00", "DM01", "研發", "管理職涯", "管理職涯", "管理職涯"], ["DM1048", "游○彤", "主任", "無", "DEP_DIR_02_G_02", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1049", "郭○婷", "資深主任", "無", "DEP_DIR_02_G_02", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1050", "張○婷", "資深主任", "無", "DEP_DIR_02_G_02", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1051", "朱○宇", "高級專員", "無", "DEP_DIR_02_G_02", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1052", "黃○欣", "一般專員", "無", "DEP_DIR_02_G_02", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1053", "李○峰", "資深主任", "組長", "DEP_DIR_02_G_03", "", "09:00–18:00", "DM01", "研發", "管理職涯", "管理職涯", "管理職涯"], ["DM1054", "胡○佑", "資深主任", "無", "DEP_DIR_02_G_03", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1055", "蔡○盛", "資深主任", "無", "DEP_DIR_02_G_03", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1056", "曾○琪", "資深專員", "無", "DEP_DIR_02_G_03", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1057", "郭○良", "主任", "無", "DEP_DIR_02_G_03", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1058", "潘○均", "一般專員", "無", "DEP_DIR_02_G_03", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1059", "黃○豪", "一般專員", "無", "DEP_DIR_02_G_03", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1060", "鍾○修", "管理師", "無", "DEP_DIR_02_G_03", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1061", "蔡○琪", "管理師", "無", "DEP_DIR_02_G_03", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1062", "賴○峰", "資深主任", "組長", "DEP_DIR_02_G_04", "", "09:00–18:00", "DM01", "研發", "管理職涯", "管理職涯", "管理職涯"], ["DM1063", "王○齊", "主任", "無", "DEP_DIR_02_G_04", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1064", "高○彤", "管理師", "無", "DEP_DIR_02_G_04", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1065", "吳○陽", "主任", "無", "DEP_DIR_02_G_04", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1066", "朱○揚", "主任", "無", "DEP_DIR_02_G_04", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1067", "高○憲", "資深專員", "無", "DEP_DIR_02_G_04", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1068", "林○廷", "資深主任", "無", "DEP_DIR_02_G_04", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1069", "呂○修", "資深經理", "部長", "DEP_ON_01_G_MGR", "", "09:00–18:00", "DM01", "管理", "管理職涯", "管理職涯", "管理職涯"], ["DM1070", "邱○倫", "經理", "副部長", "DEP_ON_01_G_MGR", "", "09:00–18:00", "DM01", "管理", "管理職涯", "管理職涯", "管理職涯"], ["DM1071", "張○文", "資深工程師", "組長", "DEP_ON_01_G_01", "", "09:00–18:00", "DM01", "研發", "管理職涯", "管理職涯", "管理職涯"], ["DM1072", "蔡○宇", "2D資深設計師", "無", "DEP_ON_01_G_01", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1073", "詹○熙", "高級軟體工程師", "無", "DEP_ON_01_G_01", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1074", "謝○辰", "資深遊戲企劃", "無", "DEP_ON_01_G_01", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1075", "許○欣", "QA測試工程師", "無", "DEP_ON_01_G_01", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1076", "吳○皓", "高級軟體工程師", "無", "DEP_ON_01_G_01", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1077", "蕭○佑", "3D動效工程師", "無", "DEP_ON_01_G_01", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1078", "許○瑋", "2D資深設計師", "無", "DEP_ON_01_G_01", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1079", "邱○琪", "2D資深設計師", "無", "DEP_ON_01_G_01", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1080", "謝○齊", "資深工程師", "組長", "DEP_ON_01_G_02", "", "09:00–18:00", "DM01", "研發", "管理職涯", "管理職涯", "管理職涯"], ["DM1081", "廖○瑋", "2D資深設計師", "無", "DEP_ON_01_G_02", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1082", "賴○瑋", "資深架構師", "無", "DEP_ON_01_G_02", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1083", "簡○信", "QA測試工程師", "無", "DEP_ON_01_G_02", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1084", "何○智", "一般工程師", "無", "DEP_ON_01_G_02", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1085", "郭○廷", "高級軟體工程師", "無", "DEP_ON_01_G_02", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1086", "許○安", "2D資深設計師", "無", "DEP_ON_01_G_02", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1087", "林○晴", "一般工程師", "無", "DEP_ON_01_G_02", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1088", "高○智", "3D動效工程師", "無", "DEP_ON_01_G_02", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1089", "郭○宇", "資深工程師", "組長", "DEP_ON_01_G_03", "", "09:00–18:00", "DM01", "研發", "管理職涯", "管理職涯", "管理職涯"], ["DM1090", "何○恩", "資深遊戲企劃", "無", "DEP_ON_01_G_03", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1091", "胡○琪", "2D資深設計師", "無", "DEP_ON_01_G_03", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1092", "謝○恩", "QA測試工程師", "無", "DEP_ON_01_G_03", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1093", "簡○憲", "資深架構師", "無", "DEP_ON_01_G_03", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1094", "施○德", "2D資深設計師", "無", "DEP_ON_01_G_03", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1095", "蕭○德", "高級軟體工程師", "無", "DEP_ON_01_G_03", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1096", "何○欣", "3D動效工程師", "無", "DEP_ON_01_G_03", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1097", "蔡○慧", "高級軟體工程師", "無", "DEP_ON_01_G_03", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1098", "楊○峰", "主任", "組長", "DEP_ON_01_G_04", "", "09:00–18:00", "DM01", "研發", "管理職涯", "管理職涯", "管理職涯"], ["DM1099", "張○儒", "高級軟體工程師", "無", "DEP_ON_01_G_04", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1100", "彭○琪", "資深遊戲企劃", "無", "DEP_ON_01_G_04", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1101", "莊○德", "2D資深設計師", "無", "DEP_ON_01_G_04", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1102", "王○儒", "高級軟體工程師", "無", "DEP_ON_01_G_04", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1103", "彭○凱", "QA測試工程師", "無", "DEP_ON_01_G_04", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1104", "周○毅", "3D動效工程師", "無", "DEP_ON_01_G_04", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1105", "蘇○穎", "資深遊戲企劃", "無", "DEP_ON_01_G_04", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1106", "朱○廷", "副理", "組長", "DEP_ON_01_G_05", "", "09:00–18:00", "DM01", "研發", "管理職涯", "管理職涯", "管理職涯"], ["DM1107", "劉○達", "高級軟體工程師", "無", "DEP_ON_01_G_05", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1108", "江○慧", "高級軟體工程師", "無", "DEP_ON_01_G_05", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1109", "游○盛", "QA測試工程師", "無", "DEP_ON_01_G_05", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1110", "江○民", "一般工程師", "無", "DEP_ON_01_G_05", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1111", "簡○宣", "高級軟體工程師", "無", "DEP_ON_01_G_05", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1112", "廖○霖", "資深遊戲企劃", "無", "DEP_ON_01_G_05", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1113", "羅○智", "資深主任", "組長", "DEP_ON_01_G_06", "", "09:00–18:00", "DM01", "研發", "管理職涯", "管理職涯", "管理職涯"], ["DM1114", "呂○佑", "一般工程師", "無", "DEP_ON_01_G_06", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1115", "簡○廷", "高級軟體工程師", "無", "DEP_ON_01_G_06", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1116", "胡○廷", "2D資深設計師", "無", "DEP_ON_01_G_06", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1117", "詹○晴", "資深遊戲企劃", "無", "DEP_ON_01_G_06", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1118", "鄭○德", "高級軟體工程師", "無", "DEP_ON_01_G_06", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1119", "李○宣", "資深遊戲企劃", "無", "DEP_ON_01_G_06", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1120", "胡○儒", "資深經理", "部長", "DEP_ON_02_G_MGR", "", "09:00–18:00", "DM01", "管理", "管理職涯", "管理職涯", "管理職涯"], ["DM1121", "簡○雯", "經理", "副部長", "DEP_ON_02_G_MGR", "", "09:00–18:00", "DM01", "管理", "管理職涯", "管理職涯", "管理職涯"], ["DM1122", "林○傑", "資深主任", "組長", "DEP_ON_02_G_01", "", "09:00–18:00", "DM01", "研發", "管理職涯", "管理職涯", "管理職涯"], ["DM1123", "葉○茜", "資深架構師", "無", "DEP_ON_02_G_01", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1124", "廖○雯", "一般工程師", "無", "DEP_ON_02_G_01", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1125", "蕭○宣", "資深架構師", "無", "DEP_ON_02_G_01", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1126", "林○憲", "資深架構師", "無", "DEP_ON_02_G_01", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1127", "簡○倫", "高級軟體工程師", "無", "DEP_ON_02_G_01", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1128", "周○民", "資深遊戲企劃", "無", "DEP_ON_02_G_01", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1129", "黃○彤", "資深架構師", "無", "DEP_ON_02_G_01", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1130", "胡○芳", "資深工程師", "組長", "DEP_ON_02_G_02", "", "09:00–18:00", "DM01", "研發", "管理職涯", "管理職涯", "管理職涯"], ["DM1131", "莊○佑", "高級軟體工程師", "無", "DEP_ON_02_G_02", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1132", "鄭○雯", "資深架構師", "無", "DEP_ON_02_G_02", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1133", "蘇○恩", "一般工程師", "無", "DEP_ON_02_G_02", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1134", "簡○彤", "資深遊戲企劃", "無", "DEP_ON_02_G_02", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1135", "洪○涵", "QA測試工程師", "無", "DEP_ON_02_G_02", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1136", "詹○盛", "3D動效工程師", "無", "DEP_ON_02_G_02", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1137", "李○揚", "2D資深設計師", "無", "DEP_ON_02_G_02", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1138", "蘇○儒", "主任", "組長", "DEP_ON_02_G_03", "", "09:00–18:00", "DM01", "研發", "管理職涯", "管理職涯", "管理職涯"], ["DM1139", "李○翔", "2D資深設計師", "無", "DEP_ON_02_G_03", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1140", "王○傑", "一般工程師", "無", "DEP_ON_02_G_03", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1141", "游○翔", "資深遊戲企劃", "無", "DEP_ON_02_G_03", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1142", "簡○峰", "高級軟體工程師", "無", "DEP_ON_02_G_03", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1143", "許○雯", "一般工程師", "無", "DEP_ON_02_G_03", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1144", "郭○樂", "副理", "組長", "DEP_ON_02_G_04", "", "09:00–18:00", "DM01", "研發", "管理職涯", "管理職涯", "管理職涯"], ["DM1145", "蕭○廷", "一般工程師", "無", "DEP_ON_02_G_04", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1146", "莊○信", "高級軟體工程師", "無", "DEP_ON_02_G_04", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1147", "楊○民", "QA測試工程師", "無", "DEP_ON_02_G_04", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1148", "曾○達", "高級軟體工程師", "無", "DEP_ON_02_G_04", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1149", "莊○慧", "3D動效工程師", "無", "DEP_ON_02_G_04", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1150", "王○凱", "資深工程師", "組長", "DEP_ON_02_G_05", "", "09:00–18:00", "DM01", "研發", "管理職涯", "管理職涯", "管理職涯"], ["DM1151", "徐○語", "資深架構師", "無", "DEP_ON_02_G_05", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1152", "施○儒", "高級軟體工程師", "無", "DEP_ON_02_G_05", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1153", "羅○傑", "QA測試工程師", "無", "DEP_ON_02_G_05", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1154", "莊○辰", "QA測試工程師", "無", "DEP_ON_02_G_05", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1155", "彭○德", "一般工程師", "無", "DEP_ON_02_G_05", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1156", "黃○語", "資深架構師", "無", "DEP_ON_02_G_05", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1157", "張○恩", "QA測試工程師", "無", "DEP_ON_02_G_05", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1158", "簡○翔", "資深遊戲企劃", "無", "DEP_ON_02_G_05", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1159", "葉○憲", "資深經理", "部長", "DEP_COM_01_G_MGR", "", "09:00–18:00", "DM01", "管理", "管理職涯", "管理職涯", "管理職涯"], ["DM1160", "王○銘", "經理", "副部長", "DEP_COM_01_G_MGR", "", "09:00–18:00", "DM01", "管理", "管理職涯", "管理職涯", "管理職涯"], ["DM1161", "許○德", "主任", "組長", "DEP_COM_01_G_01", "", "09:00–18:00", "DM01", "研發", "管理職涯", "管理職涯", "管理職涯"], ["DM1162", "林○陽", "韌體高級工程師", "無", "DEP_COM_01_G_01", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1163", "羅○德", "測試驗證工程師", "無", "DEP_COM_01_G_01", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1164", "李○語", "資深系統工程師", "無", "DEP_COM_01_G_01", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1165", "李○欣", "韌體高級工程師", "無", "DEP_COM_01_G_01", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1166", "葉○熙", "高級軟體工程師", "無", "DEP_COM_01_G_01", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1167", "鍾○傑", "副理", "組長", "DEP_COM_01_G_02", "", "09:00–18:00", "DM01", "研發", "管理職涯", "管理職涯", "管理職涯"], ["DM1168", "洪○茜", "高級軟體工程師", "無", "DEP_COM_01_G_02", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1169", "羅○雯", "一般工程師", "無", "DEP_COM_01_G_02", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1170", "簡○齊", "韌體高級工程師", "無", "DEP_COM_01_G_02", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1171", "朱○芳", "一般工程師", "無", "DEP_COM_01_G_02", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1172", "蘇○雯", "高級軟體工程師", "無", "DEP_COM_01_G_02", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1173", "賴○倫", "工業設計師", "無", "DEP_COM_01_G_02", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1174", "許○民", "機構工程師", "無", "DEP_COM_01_G_02", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1175", "鍾○辰", "韌體高級工程師", "無", "DEP_COM_01_G_02", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1176", "楊○文", "主任", "組長", "DEP_COM_01_G_03", "", "09:00–18:00", "DM01", "研發", "管理職涯", "管理職涯", "管理職涯"], ["DM1177", "劉○茜", "一般工程師", "無", "DEP_COM_01_G_03", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1178", "王○晴", "工業設計師", "無", "DEP_COM_01_G_03", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1179", "莊○峰", "資深系統工程師", "無", "DEP_COM_01_G_03", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1180", "林○良", "工業設計師", "無", "DEP_COM_01_G_03", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1181", "莊○盛", "資深系統工程師", "無", "DEP_COM_01_G_03", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1182", "李○霖", "一般工程師", "無", "DEP_COM_01_G_03", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1183", "李○民", "高級軟體工程師", "無", "DEP_COM_01_G_03", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1184", "葉○揚", "高級軟體工程師", "無", "DEP_COM_01_G_03", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1185", "葉○芳", "資深主任", "組長", "DEP_COM_01_G_04", "", "09:00–18:00", "DM01", "研發", "管理職涯", "管理職涯", "管理職涯"], ["DM1186", "蘇○揚", "機構工程師", "無", "DEP_COM_01_G_04", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1187", "徐○宣", "工業設計師", "無", "DEP_COM_01_G_04", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1188", "謝○傑", "一般工程師", "無", "DEP_COM_01_G_04", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1189", "李○達", "機構工程師", "無", "DEP_COM_01_G_04", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1190", "彭○彤", "測試驗證工程師", "無", "DEP_COM_01_G_04", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1191", "江○德", "韌體高級工程師", "無", "DEP_COM_01_G_04", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1192", "楊○毅", "資深工程師", "組長", "DEP_COM_01_G_05", "", "09:00–18:00", "DM01", "研發", "管理職涯", "管理職涯", "管理職涯"], ["DM1193", "張○均", "韌體高級工程師", "無", "DEP_COM_01_G_05", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1194", "胡○峰", "測試驗證工程師", "無", "DEP_COM_01_G_05", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1195", "林○文", "資深系統工程師", "無", "DEP_COM_01_G_05", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1196", "曾○豪", "工業設計師", "無", "DEP_COM_01_G_05", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1197", "施○欣", "韌體高級工程師", "無", "DEP_COM_01_G_05", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1198", "施○文", "一般工程師", "無", "DEP_COM_01_G_05", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1199", "蕭○揚", "副理", "組長", "DEP_COM_01_G_06", "", "09:00–18:00", "DM01", "研發", "管理職涯", "管理職涯", "管理職涯"], ["DM1200", "賴○達", "一般工程師", "無", "DEP_COM_01_G_06", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1201", "簡○琪", "工業設計師", "無", "DEP_COM_01_G_06", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1202", "陳○熙", "資深系統工程師", "無", "DEP_COM_01_G_06", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1203", "林○霖", "高級軟體工程師", "無", "DEP_COM_01_G_06", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1204", "施○樂", "工業設計師", "無", "DEP_COM_01_G_06", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1205", "彭○熙", "機構工程師", "無", "DEP_COM_01_G_06", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1206", "吳○熙", "資深主任", "組長", "DEP_COM_01_G_07", "", "09:00–18:00", "DM01", "研發", "管理職涯", "管理職涯", "管理職涯"], ["DM1207", "江○德", "一般工程師", "無", "DEP_COM_01_G_07", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1208", "胡○瑋", "機構工程師", "無", "DEP_COM_01_G_07", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1209", "吳○陽", "測試驗證工程師", "無", "DEP_COM_01_G_07", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1210", "鄭○穎", "高級軟體工程師", "無", "DEP_COM_01_G_07", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1211", "謝○語", "一般工程師", "無", "DEP_COM_01_G_07", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1212", "蘇○婷", "資深系統工程師", "無", "DEP_COM_01_G_07", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1213", "何○慧", "一般工程師", "無", "DEP_COM_01_G_07", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1214", "洪○皓", "資深經理", "部長", "DEP_COM_02_G_MGR", "", "09:00–18:00", "DM01", "管理", "管理職涯", "管理職涯", "管理職涯"], ["DM1215", "王○宣", "經理", "副部長", "DEP_COM_02_G_MGR", "", "09:00–18:00", "DM01", "管理", "管理職涯", "管理職涯", "管理職涯"], ["DM1216", "蔡○穎", "資深工程師", "組長", "DEP_COM_02_G_01", "", "09:00–18:00", "DM01", "研發", "管理職涯", "管理職涯", "管理職涯"], ["DM1217", "楊○穎", "資深系統工程師", "無", "DEP_COM_02_G_01", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1218", "羅○銘", "資深系統工程師", "無", "DEP_COM_02_G_01", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1219", "莊○穎", "高級軟體工程師", "無", "DEP_COM_02_G_01", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1220", "周○豪", "高級軟體工程師", "無", "DEP_COM_02_G_01", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1221", "簡○婷", "工業設計師", "無", "DEP_COM_02_G_01", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1222", "賴○琪", "主任", "組長", "DEP_COM_02_G_02", "", "09:00–18:00", "DM01", "研發", "管理職涯", "管理職涯", "管理職涯"], ["DM1223", "鍾○陽", "機構工程師", "無", "DEP_COM_02_G_02", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1224", "洪○辰", "工業設計師", "無", "DEP_COM_02_G_02", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1225", "郭○雯", "一般工程師", "無", "DEP_COM_02_G_02", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1226", "沈○芳", "資深系統工程師", "無", "DEP_COM_02_G_02", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1227", "胡○樂", "高級軟體工程師", "無", "DEP_COM_02_G_02", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1228", "徐○廷", "機構工程師", "無", "DEP_COM_02_G_02", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1229", "劉○雯", "測試驗證工程師", "無", "DEP_COM_02_G_02", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1230", "李○宏", "資深主任", "組長", "DEP_COM_02_G_03", "", "09:00–18:00", "DM01", "研發", "管理職涯", "管理職涯", "管理職涯"], ["DM1231", "王○澤", "工業設計師", "無", "DEP_COM_02_G_03", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1232", "廖○恩", "測試驗證工程師", "無", "DEP_COM_02_G_03", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1233", "邱○民", "韌體高級工程師", "無", "DEP_COM_02_G_03", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1234", "蕭○雯", "測試驗證工程師", "無", "DEP_COM_02_G_03", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1235", "賴○欣", "工業設計師", "無", "DEP_COM_02_G_03", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1236", "施○辰", "資深系統工程師", "無", "DEP_COM_02_G_03", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1237", "高○樂", "主任", "組長", "DEP_COM_02_G_04", "", "09:00–18:00", "DM01", "研發", "管理職涯", "管理職涯", "管理職涯"], ["DM1238", "賴○齊", "工業設計師", "無", "DEP_COM_02_G_04", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1239", "陳○倫", "機構工程師", "無", "DEP_COM_02_G_04", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1240", "鄭○語", "韌體高級工程師", "無", "DEP_COM_02_G_04", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1241", "邱○茜", "資深系統工程師", "無", "DEP_COM_02_G_04", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1242", "謝○均", "資深系統工程師", "無", "DEP_COM_02_G_04", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1243", "許○齊", "副理", "組長", "DEP_COM_02_G_05", "", "09:00–18:00", "DM01", "研發", "管理職涯", "管理職涯", "管理職涯"], ["DM1244", "詹○穎", "資深系統工程師", "無", "DEP_COM_02_G_05", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1245", "吳○雯", "工業設計師", "無", "DEP_COM_02_G_05", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1246", "羅○熙", "韌體高級工程師", "無", "DEP_COM_02_G_05", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1247", "羅○儒", "資深系統工程師", "無", "DEP_COM_02_G_05", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1248", "莊○澤", "一般工程師", "無", "DEP_COM_02_G_05", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1249", "蔡○揚", "一般工程師", "無", "DEP_COM_02_G_05", "", "09:00–18:00", "DM01", "專業", "軟體開發", "軟體開發", "軟體開發"], ["DM1250", "許○齊", "資深經理", "部長", "DEP_GLO_01_G_MGR", "", "09:00–18:00", "DM01", "管理", "管理職涯", "管理職涯", "管理職涯"], ["DM1251", "詹○宏", "經理", "副部長", "DEP_GLO_01_G_MGR", "", "09:00–18:00", "DM01", "管理", "管理職涯", "管理職涯", "管理職涯"], ["DM1252", "廖○達", "資深主任", "組長", "DEP_GLO_01_G_01", "", "09:00–18:00", "DM01", "研發", "管理職涯", "管理職涯", "管理職涯"], ["DM1253", "蔡○雯", "海外技術工程師", "無", "DEP_GLO_01_G_01", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1254", "周○穎", "資深營運專員", "無", "DEP_GLO_01_G_01", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1255", "邱○達", "客服專員", "無", "DEP_GLO_01_G_01", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1256", "張○毅", "海外技術工程師", "無", "DEP_GLO_01_G_01", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1257", "邱○倫", "資深營運專員", "無", "DEP_GLO_01_G_01", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1258", "高○瑋", "在地化資深專員", "無", "DEP_GLO_01_G_01", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1259", "蔡○良", "商務高級專員", "無", "DEP_GLO_01_G_01", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1260", "朱○澤", "資深工程師", "組長", "DEP_GLO_01_G_02", "", "09:00–18:00", "DM01", "研發", "管理職涯", "管理職涯", "管理職涯"], ["DM1261", "鍾○齊", "資深營運專員", "無", "DEP_GLO_01_G_02", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1262", "朱○佑", "在地化資深專員", "無", "DEP_GLO_01_G_02", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1263", "洪○廷", "商務高級專員", "無", "DEP_GLO_01_G_02", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1264", "黃○涵", "資深營運專員", "無", "DEP_GLO_01_G_02", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1265", "沈○語", "商務高級專員", "無", "DEP_GLO_01_G_02", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1266", "周○倫", "客服專員", "無", "DEP_GLO_01_G_02", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1267", "邱○霖", "副理", "組長", "DEP_GLO_01_G_03", "", "09:00–18:00", "DM01", "研發", "管理職涯", "管理職涯", "管理職涯"], ["DM1268", "鍾○均", "客服專員", "無", "DEP_GLO_01_G_03", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1269", "郭○齊", "在地化資深專員", "無", "DEP_GLO_01_G_03", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1270", "邱○毅", "雲端架構工程師", "無", "DEP_GLO_01_G_03", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1271", "劉○熙", "海外技術工程師", "無", "DEP_GLO_01_G_03", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1272", "謝○陽", "海外技術工程師", "無", "DEP_GLO_01_G_03", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1273", "施○辰", "在地化資深專員", "無", "DEP_GLO_01_G_03", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1274", "張○豪", "客服專員", "無", "DEP_GLO_01_G_03", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1275", "廖○民", "資深主任", "組長", "DEP_GLO_01_G_04", "", "09:00–18:00", "DM01", "研發", "管理職涯", "管理職涯", "管理職涯"], ["DM1276", "葉○芳", "客服專員", "無", "DEP_GLO_01_G_04", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1277", "簡○茜", "商務高級專員", "無", "DEP_GLO_01_G_04", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1278", "朱○信", "客服專員", "無", "DEP_GLO_01_G_04", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1279", "曾○倫", "商務高級專員", "無", "DEP_GLO_01_G_04", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1280", "謝○銘", "商務高級專員", "無", "DEP_GLO_01_G_04", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1281", "李○倫", "海外技術工程師", "無", "DEP_GLO_01_G_04", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1282", "黃○安", "副理", "組長", "DEP_GLO_01_G_05", "", "09:00–18:00", "DM01", "研發", "管理職涯", "管理職涯", "管理職涯"], ["DM1283", "高○琪", "海外技術工程師", "無", "DEP_GLO_01_G_05", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1284", "胡○茜", "商務高級專員", "無", "DEP_GLO_01_G_05", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1285", "許○揚", "海外技術工程師", "無", "DEP_GLO_01_G_05", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1286", "廖○憲", "商務高級專員", "無", "DEP_GLO_01_G_05", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1287", "施○齊", "資深營運專員", "無", "DEP_GLO_01_G_05", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1288", "曾○傑", "海外技術工程師", "無", "DEP_GLO_01_G_05", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1289", "張○倫", "在地化資深專員", "無", "DEP_GLO_01_G_05", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1290", "江○民", "資深經理", "部長", "DEP_GLO_02_G_MGR", "", "09:00–18:00", "DM01", "管理", "管理職涯", "管理職涯", "管理職涯"], ["DM1291", "蘇○陽", "經理", "副部長", "DEP_GLO_02_G_MGR", "", "09:00–18:00", "DM01", "管理", "管理職涯", "管理職涯", "管理職涯"], ["DM1292", "賴○銘", "資深主任", "組長", "DEP_GLO_02_G_01", "", "09:00–18:00", "DM01", "研發", "管理職涯", "管理職涯", "管理職涯"], ["DM1293", "簡○信", "客服專員", "無", "DEP_GLO_02_G_01", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1294", "潘○宇", "雲端架構工程師", "無", "DEP_GLO_02_G_01", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1295", "賴○翔", "資深營運專員", "無", "DEP_GLO_02_G_01", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1296", "施○涵", "在地化資深專員", "無", "DEP_GLO_02_G_01", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1297", "蘇○雯", "海外技術工程師", "無", "DEP_GLO_02_G_01", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1298", "簡○恩", "客服專員", "無", "DEP_GLO_02_G_01", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1299", "游○均", "客服專員", "無", "DEP_GLO_02_G_01", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1300", "呂○慧", "主任", "組長", "DEP_GLO_02_G_02", "", "09:00–18:00", "DM01", "研發", "管理職涯", "管理職涯", "管理職涯"], ["DM1301", "莊○毅", "在地化資深專員", "無", "DEP_GLO_02_G_02", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1302", "吳○智", "商務高級專員", "無", "DEP_GLO_02_G_02", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1303", "簡○智", "海外技術工程師", "無", "DEP_GLO_02_G_02", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1304", "葉○語", "客服專員", "無", "DEP_GLO_02_G_02", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1305", "莊○皓", "資深營運專員", "無", "DEP_GLO_02_G_02", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1306", "游○樂", "客服專員", "無", "DEP_GLO_02_G_02", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1307", "洪○欣", "在地化資深專員", "無", "DEP_GLO_02_G_02", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1308", "游○婷", "在地化資深專員", "無", "DEP_GLO_02_G_02", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1309", "鍾○信", "副理", "組長", "DEP_GLO_02_G_03", "", "09:00–18:00", "DM01", "研發", "管理職涯", "管理職涯", "管理職涯"], ["DM1310", "徐○凱", "海外技術工程師", "無", "DEP_GLO_02_G_03", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1311", "莊○涵", "雲端架構工程師", "無", "DEP_GLO_02_G_03", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1312", "廖○澤", "商務高級專員", "無", "DEP_GLO_02_G_03", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1313", "沈○霖", "在地化資深專員", "無", "DEP_GLO_02_G_03", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1314", "鄭○齊", "海外技術工程師", "無", "DEP_GLO_02_G_03", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1315", "朱○芳", "海外技術工程師", "無", "DEP_GLO_02_G_03", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1316", "游○宏", "商務高級專員", "無", "DEP_GLO_02_G_03", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1317", "吳○辰", "客服專員", "無", "DEP_GLO_02_G_03", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1318", "江○晴", "資深主任", "組長", "DEP_GLO_02_G_04", "", "09:00–18:00", "DM01", "研發", "管理職涯", "管理職涯", "管理職涯"], ["DM1319", "高○憲", "雲端架構工程師", "無", "DEP_GLO_02_G_04", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1320", "鍾○均", "資深營運專員", "無", "DEP_GLO_02_G_04", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1321", "游○欣", "海外技術工程師", "無", "DEP_GLO_02_G_04", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1322", "呂○文", "雲端架構工程師", "無", "DEP_GLO_02_G_04", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1323", "胡○芳", "資深營運專員", "無", "DEP_GLO_02_G_04", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1324", "潘○辰", "資深營運專員", "無", "DEP_GLO_02_G_04", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1325", "施○欣", "資深營運專員", "無", "DEP_GLO_02_G_04", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1326", "潘○凱", "資深營運專員", "無", "DEP_GLO_02_G_04", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1327", "蕭○倫", "副理", "組長", "DEP_GLO_02_G_05", "", "09:00–18:00", "DM01", "研發", "管理職涯", "管理職涯", "管理職涯"], ["DM1328", "高○毅", "商務高級專員", "無", "DEP_GLO_02_G_05", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1329", "黃○修", "在地化資深專員", "無", "DEP_GLO_02_G_05", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1330", "高○樂", "客服專員", "無", "DEP_GLO_02_G_05", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1331", "羅○澤", "商務高級專員", "無", "DEP_GLO_02_G_05", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1332", "江○恩", "資深營運專員", "無", "DEP_GLO_02_G_05", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1333", "胡○瑜", "資深營運專員", "無", "DEP_GLO_02_G_05", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1334", "楊○婷", "商務高級專員", "無", "DEP_GLO_02_G_05", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"], ["DM1335", "廖○熙", "客服專員", "無", "DEP_GLO_02_G_05", "", "09:00–18:00", "DM01", "專業", "營運支援", "營運支援", "營運支援"]];
+  const basePeople = basePeopleRaw.map(arr => ({
+    id: arr[0],
+    name: arr[1],
+    profTitle: arr[2],
+    mgrTitle: arr[3],
+    group: arr[4],
+    reportsTo: arr[5],
+    shift: arr[6],
+    seat: arr[7],
+    category: arr[8],
+    careerDomain: arr[9],
+    functionCat: arr[10],
+    profRole: arr[11],
+    notes: ''
+  }));
+
+  const initialOrg = structuredClone(baseOrg);
+  const initialPeople = structuredClone(basePeople);
+
+  let org = structuredClone(baseOrg);
+  let people = structuredClone(basePeople);
+  let selected = new Set();
+  let changes = [];
+  let focusDeptId = 'DEP_COM_01';
+  let targetDeptIds = new Set();
+
+  let hiddenGroupIds = new Set();
+  // 關注部門預設全部展開可見；非關注之其他部門組別暫時收攏，待叫出或點選時展開
+  function initGroupVisibility() {
+    hiddenGroupIds.clear();
+    org.forEach(div => div.depts.forEach(dep => {
+      if (dep.id !== focusDeptId) {
+        dep.groups.forEach(g => hiddenGroupIds.add(g.id));
+      }
+    }));
+  }
+  initGroupVisibility();
+
+  // 登入身分與權限模式：支援切換 HR管理者 或 各部門主管
+  let currentRole = 'HR'; // 'HR' 或特定部門 ID (如: 'D1_DEP_02')
+  let isHR = true;
+
+  function isDepartmentManaged(deptId) {
+    if (currentRole === 'HR') return true;
+    return deptId === currentRole;
+  }
+
+  function renderRoleSelector() {
+    const sel = $('#selLoginRole');
+    if (!sel) return;
+
+    if (sel.options.length === 0) {
+      let html = `<option value="HR">👑 HR管理者 (全公司最高權限)</option>`;
+      org.forEach(div => {
+        div.depts.forEach(dep => {
+          const lead = getDeptLeadership(dep.id);
+          const ministerName = lead && lead.minister ? lead.minister.name : '';
+          const label = `${div.shortName || div.name} · ${dep.name}長 ${ministerName ? '(' + ministerName + ')' : ''}`;
+          html += `<option value="${esc(dep.id)}">👔 ${esc(label)}</option>`;
+        });
+      });
+      sel.innerHTML = html;
+    }
+    sel.value = currentRole;
+  }
+
+  window.onRoleChange = function(newRole) {
+    currentRole = newRole;
+    if (newRole === 'HR') {
+      isHR = true;
+      const focusBox = $('#focusBoxContainer') || $('.focus-box');
+      if (focusBox) focusBox.style.display = 'inline-flex';
+      toast('已切換為「HR管理者」：具備全組織完整檢視與異動權限');
+    } else {
+      isHR = false;
+      focusDeptId = newRole;
+      const focusBox = $('#focusBoxContainer') || $('.focus-box');
+      if (focusBox) focusBox.style.display = 'none';
+      const loc = locateDept(focusDeptId);
+      const dName = loc ? loc.department.name : '';
+      if (loc) {
+        loc.department.groups.forEach(g => hiddenGroupIds.delete(g.id));
+      }
+      toast(`已切換為「${dName}長」：僅可檢視本部門人員，其他部門僅顯示組織架構`);
+    }
+
+    initFocusDeptOptions();
+    render();
+  };
+
+  /* =========================================================
+   * 2. 工具函數
+   * ========================================================= */
+  const $ = sel => document.querySelector(sel);
+  const $$ = sel => document.querySelectorAll(sel);
+  const esc = s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+  function toast(msg) {
+    const p = $('#toastPill');
+    if (!p) return;
+    p.textContent = msg;
+    p.style.display = 'block';
+    clearTimeout(p._timer);
+    p._timer = setTimeout(() => { p.style.display = 'none'; }, 2200);
+  }
+
+  function locateGroup(gid, useInitial = false) {
+    const o = useInitial ? initialOrg : org;
+    for (const div of o) {
+      for (const dep of div.depts) {
+        for (const g of dep.groups) {
+          if (g.id === gid) return { division: div, department: dep, group: g };
+        }
+      }
+    }
+    return null;
+  }
+
+  function locateDept(deptId, useInitial = false) {
+    const o = useInitial ? initialOrg : org;
+    for (const div of o) {
+      for (const dep of div.depts) {
+        if (dep.id === deptId) return { division: div, department: dep };
+      }
+    }
+    return null;
+  }
+
+  function locateDivision(divId, useInitial = false) {
+    const o = useInitial ? initialOrg : org;
+    return o.find(d => d.id === divId) || null;
+  }
+
+  function formatPathDiff(fromGid, toGid) {
+    const fromLoc = locateGroup(fromGid, true);
+    const toLoc = locateGroup(toGid);
+    if (!fromLoc || !toLoc) return { from: fromGid, to: toGid };
+
+    const sameDiv = fromLoc.division.id === toLoc.division.id;
+    const sameDept = fromLoc.department.id === toLoc.department.id;
+
+    if (sameDiv && sameDept) {
+      return {
+        from: fromLoc.group.name,
+        to: toLoc.group.name
+      };
+    } else if (sameDiv) {
+      return {
+        from: `${fromLoc.department.name} / ${fromLoc.group.name}`,
+        to: `${toLoc.department.name} / ${toLoc.group.name}`
+      };
+    } else {
+      return {
+        from: `${fromLoc.division.name} / ${fromLoc.department.name} / ${fromLoc.group.name}`,
+        to: `${toLoc.division.name} / ${toLoc.department.name} / ${toLoc.group.name}`
+      };
+    }
+  }
+
+  function initFocusDeptOptions() {
+    const focusBox = $('#focusBoxContainer') || $('.focus-box');
+    if (focusBox) {
+      focusBox.style.display = isHR ? 'inline-flex' : 'none';
+    }
+
+    const sel = $('#selFocusDept');
+    if (!sel) return;
+    
+    let html = '';
+    org.forEach(div => {
+      html += `<optgroup label="${esc(div.shortName || div.name)} (${esc(div.name)})">`;
+      div.depts.forEach(dep => {
+        html += `<option value="${esc(dep.id)}" ${dep.id === focusDeptId ? 'selected' : ''}>
+          ${esc(dep.name)}
+        </option>`;
+      });
+      html += `</optgroup>`;
+    });
+
+    sel.innerHTML = html;
+
+    sel.onchange = e => {
+      focusDeptId = e.target.value;
+      const curLoc = locateDept(focusDeptId);
+      if (curLoc) {
+        // 切換部門時自動展開該部門所有組別，同仁立即可見
+        curLoc.department.groups.forEach(g => hiddenGroupIds.delete(g.id));
+      }
+      render();
+    };
+  }
+
+  /* =========================================================
+   * 3. 畫布渲染
+   * ========================================================= */
+  function render() {
+    renderRoleSelector();
+    renderSubBar();
+    renderCanvas();
+    renderDiffList();
+  }
+
+  function renderSubBar() {
+    const loc = locateDept(focusDeptId);
+    if (!loc) return;
+
+    $('#txtDivName').textContent = loc.division.name;
+    $('#txtDeptName').textContent = loc.department.name;
+
+    // 更新「商用研一部」按鈕狀態：按下去 (全隱藏 pressed) vs 彈起來 (顯示全組別 raised)
+    const btn = $('#btnDeptGroupToggle');
+    const indicator = $('#txtDeptGroupIndicator');
+    const gIds = loc.department.groups.map(g => g.id);
+    const allHidden = gIds.length > 0 && gIds.every(id => hiddenGroupIds.has(id));
+    if (btn) {
+      if (allHidden) {
+        btn.className = 'dept-toggle-btn pressed';
+        btn.title = '點擊展開全組別';
+        if (indicator) indicator.textContent = '📁';
+      } else {
+        btn.className = 'dept-toggle-btn raised';
+        btn.title = '點擊收攏全組別';
+        if (indicator) indicator.textContent = '📂';
+      }
+    }
+
+    const container = $('#groupPillsContainer');
+    if (!container) return;
+
+    let pillsHtml = loc.department.groups.filter(g => g.name !== '主管' && g.name !== '部主管室').map(g => {
+      const isHidden = hiddenGroupIds.has(g.id);
+      return `
+        <div class="pill-btn ${isHidden ? 'hidden' : 'visible'}" onclick="toggleGroupHide('${esc(g.id)}')" title="點擊切換顯示/隱藏">
+          <span>${esc(g.name)}</span>
+        </div>
+      `;
+    }).join('');
+
+    // 若有叫出的目標部門，亦呈現該目標部門的各組切換
+    targetDeptIds.forEach(tId => {
+      const tLoc = locateDept(tId);
+      if (tLoc) {
+        pillsHtml += `<div style="width:1px; height:18px; background:#cbd5e1; margin:0 4px; flex-shrink:0;"></div>`;
+        pillsHtml += `<span style="font-size:11px; font-weight:800; color:#7c3aed; padding:2px 4px; flex-shrink:0;">${esc(tLoc.department.name)}:</span>`;
+        pillsHtml += tLoc.department.groups.map(g => {
+          const isHidden = hiddenGroupIds.has(g.id);
+          return `
+            <div class="pill-btn ${isHidden ? 'hidden' : 'visible'}" style="${!isHidden ? 'border-color:#8b5cf6; color:#6d28d9;' : ''}" onclick="toggleGroupHide('${esc(g.id)}')" title="點擊切換顯示/隱藏">
+              <span>${esc(g.name)}</span>
+            </div>
+          `;
+        }).join('');
+      }
+    });
+
+    container.innerHTML = pillsHtml;
+  }
+
+  // 同行「商用研一部」按鈕：按下去隱藏全組別，再按一次彈起來顯示全組別
+  window.toggleCurrentDeptAllGroups = function() {
+    const loc = locateDept(focusDeptId);
+    if (!loc) return;
+    const gIds = loc.department.groups.map(g => g.id);
+    const allHidden = gIds.length > 0 && gIds.every(id => hiddenGroupIds.has(id));
+    if (allHidden) {
+      // 彈起來 -> 顯示全組別
+      gIds.forEach(id => hiddenGroupIds.delete(id));
+      toast(`已彈起展開【${loc.department.name}】全組別`);
+    } else {
+      // 按下去 -> 隱藏全組別
+      gIds.forEach(id => hiddenGroupIds.add(id));
+      toast(`已按下去隱藏【${loc.department.name}】全組別`);
+    }
+    render();
+  };
+
+  // 部門卡片標題處的全組別切換
+  window.toggleDeptGroups = function(deptId) {
+    const loc = locateDept(deptId);
+    if (!loc) return;
+    const gIds = loc.department.groups.map(g => g.id);
+    const allHidden = gIds.length > 0 && gIds.every(id => hiddenGroupIds.has(id));
+    if (allHidden) {
+      gIds.forEach(id => hiddenGroupIds.delete(id));
+      toast(`已展開【${loc.department.name}】全組別`);
+    } else {
+      gIds.forEach(id => hiddenGroupIds.add(id));
+      toast(`已隱藏【${loc.department.name}】全組別`);
+    }
+    render();
+  };
+
+  window.showAllGroups = function() {
+    const curLoc = locateDept(focusDeptId);
+    if (curLoc) curLoc.department.groups.forEach(g => hiddenGroupIds.delete(g.id));
+    targetDeptIds.forEach(tId => {
+      const tLoc = locateDept(tId);
+      if (tLoc) tLoc.department.groups.forEach(g => hiddenGroupIds.delete(g.id));
+    });
+    render();
+    toast('已展開所有組別');
+  };
+
+  window.hideAllGroups = function() {
+    const curLoc = locateDept(focusDeptId);
+    if (curLoc) curLoc.department.groups.forEach(g => hiddenGroupIds.add(g.id));
+    targetDeptIds.forEach(tId => {
+      const tLoc = locateDept(tId);
+      if (tLoc) tLoc.department.groups.forEach(g => hiddenGroupIds.add(g.id));
+    });
+    render();
+    toast('已隱藏所有組別');
+  };
+
+  window.toggleGroupHide = function(gid) {
+    if (hiddenGroupIds.has(gid)) hiddenGroupIds.delete(gid);
+    else hiddenGroupIds.add(gid);
+    render();
+  };
+
+  function renderCanvas() {
+    const srcLoc = locateDept(focusDeptId);
+    const srcCol = $('#sourceDeptCol');
+    if (srcCol && srcLoc) {
+      srcCol.innerHTML = renderDeptColumnHtml(srcLoc, false);
+    }
+
+    const targetArea = $('#targetDeptsArea');
+    if (targetArea) {
+      let tHtml = '';
+      for (const tId of targetDeptIds) {
+        const tLoc = locateDept(tId);
+        if (tLoc) {
+          tHtml += `
+            <div class="dept-col target-dept">
+              ${renderDeptColumnHtml(tLoc, true)}
+            </div>
+          `;
+        }
+      }
+      targetArea.innerHTML = tHtml;
+    }
+
+    bindDragAndDropEvents();
+  }
+
+  /* =========================================================
+   * 部門管理主管判定 (部長 / 副部長)
+   * ========================================================= */
+    /* =========================================================
+   * 標準通用職級稱謂 (列印與輸出時不列出職類，僅呈現一般工程師/高級工程師/高級專員等)
+   * ========================================================= */
+  function toStandardRankTitle(rawTitle) {
+    const t = String(rawTitle || '').replace(/\([一二三123]\)/g, '').trim();
+    if (!t) return '一般專員';
+
+    if (t.includes('總經理')) return '總經理';
+    if (t.includes('協理')) return '協理';
+    if (t.includes('資深經理')) return '資深經理';
+    if (t.includes('經理')) return '經理';
+    if (t.includes('資深副理')) return '資深副理';
+    if (t.includes('副理')) return '副理';
+    if (t.includes('資深主任')) return '資深主任';
+    if (t.includes('主任')) return '主任';
+
+    // 高級系列 (如 高級軟體工程師、高級機率工程師 ➔ 高級工程師；高級美術設計、高級遊戲企劃 ➔ 高級專員)
+    if (t.includes('高級')) {
+      if (t.includes('工程師') || t.includes('技術') || t.includes('韌體') || t.includes('系統') || t.includes('機率')) {
+        return '高級工程師';
+      }
+      return '高級專員';
+    }
+
+    // 工程師系列
+    if (t.includes('工程師') || t.includes('技術員') || t.includes('韌體') || t.includes('機率')) {
+      return '一般工程師';
+    }
+
+    // 助理系列
+    if (t.includes('助理')) {
+      return '助理專員';
+    }
+
+    // 專員、設計、企劃、管理、員工等
+    return '一般專員';
+  }
+
+function getDeptLeadership(deptId) {
+    const loc = locateDept(deptId);
+    if (!loc) return { minister: null, deputies: [] };
+
+    const deptPeople = people.filter(p => {
+      const pLoc = locateGroup(p.group);
+      return pLoc && pLoc.department.id === loc.department.id;
+    });
+
+    // 1. 部長 / 處長 (最高主管)
+    let minister = deptPeople.find(p => p.mgrTitle === '部長' || p.mgrTitle === '處長');
+    if (!minister && loc.department.groups.length > 0) {
+      const fgPeople = deptPeople.filter(p => p.group === loc.department.groups[0].id);
+      minister = fgPeople.find(p => ['協理', '資深經理', '經理', '總經理'].some(t => p.profTitle && p.profTitle.includes(t)));
+    }
+
+    // 2. 副部長 / 副處長
+    let deputies = deptPeople.filter(p => (p.mgrTitle === '副部長' || p.mgrTitle === '副處長') && (!minister || p.id !== minister.id));
+
+    return { minister, deputies };
+  }
+
+  function renderDeptLeadersSubtext(dep) {
+    const leadership = getDeptLeadership(dep.id);
+    const parts = [];
+    if (leadership.minister) {
+      const title = leadership.minister.mgrTitle !== '無' ? leadership.minister.mgrTitle : '部長';
+      parts.push(`<span style="color:#1e293b; font-weight:700;">${esc(title)}: ${esc(leadership.minister.name)}</span> <span style="color:#64748b; font-size:11px;">(${esc(leadership.minister.profTitle || '')})</span>`);
+    }
+    if (leadership.deputies && leadership.deputies.length > 0) {
+      leadership.deputies.forEach(d => {
+        parts.push(`<span style="color:#1e293b; font-weight:700;">${esc(d.mgrTitle)}: ${esc(d.name)}</span> <span style="color:#64748b; font-size:11px;">(${esc(d.profTitle || '')})</span>`);
+      });
+    }
+    if (parts.length === 0) return '';
+    return `
+      <div style="font-size:12px; color:#475569; display:flex; flex-wrap:wrap; gap:8px; margin-top:3px; padding-top:2px;">
+        ${parts.join('<span style="color:#cbd5e1;">·</span>')}
+      </div>
+    `;
+  }
+
+  function renderDeptColumnHtml(loc, isTarget) {
+    // 過濾掉名為「主管」或「部主管室」之群組（因部長、副部長已直接置於左側部門名稱下方）
+    const groups = loc.department.groups
+      .filter(g => !hiddenGroupIds.has(g.id))
+      .filter(g => g.name !== '主管' && g.name !== '部主管室');
+
+    return `
+      <div class="dept-col-head">
+        <div>
+          <div style="font-size: 11.5px; font-weight:800; color:${isTarget ? '#7c3aed' : '#2563eb'}; margin-bottom:2px;">
+            ${isTarget ? '🎯 目標接收單位 (' + esc(loc.division.shortName || loc.division.name) + ')' : '🏢 ' + esc(loc.division.name)}
+          </div>
+          <div class="dept-col-title">
+            <span class="editable-title" onclick="${!isTarget ? `renameDeptPrompt('${esc(loc.department.id)}')` : ''}" title="${!isTarget ? '點擊修改部門名稱' : ''}">
+              📁 ${esc(loc.department.name)}
+            </span>
+          </div>
+          <!-- 部長、副部長無icon，簡潔置於部門名稱下方 -->
+          ${renderDeptLeadersSubtext(loc.department)}
+        </div>
+        <div class="dept-col-tools">
+          ${isTarget ? `
+            <button class="mini-icon-btn" onclick="removeTargetDept('${esc(loc.department.id)}')" style="color:#dc2626;" title="關閉">✕</button>
+          ` : ''}
+        </div>
+      </div>
+
+      <div class="groups-cards-container">
+        ${groups.length ? groups.map(g => renderGroupCardHtml(g, loc.department, isTarget)).join('') : `
+          <div style="text-align:center; padding:30px 40px; color:#94a3b8; font-size: 13px; align-self:center;">
+            此部門組別尚未開啟<br><span style="font-size:12px; color:#64748b;">請由上方切換開啟欲操作的組別</span>
+          </div>
+        `}
+      </div>
+    `;
+  }
+
+  function renderGroupCardHtml(g, dep, isTarget) {
+    const isManaged = isDepartmentManaged(dep.id);
+    const isForeign = !isManaged;
+
+    // 管轄部門：呈現全部組員；非管轄部門：下面全空，只秀出調動過去的人員
+    let displayMembers;
+    if (isManaged) {
+      displayMembers = people.filter(p => p.group === g.id);
+    } else {
+      displayMembers = people.filter(p => p.group === g.id && changes.some(c => c.personId === p.id));
+    }
+
+    // 組長排第一位；新移動進來的同仁排在最上方
+    displayMembers.sort((a, b) => {
+      if (a.id === g.manager) return -1;
+      if (b.id === g.manager) return 1;
+
+      // 新移動過來的同仁排序至該組最上方 (按調動順序由新至舊)
+      const aMoved = a._movedAt || 0;
+      const bMoved = b._movedAt || 0;
+      if (aMoved !== bMoved) return bMoved - aMoved;
+
+      return 0;
+    });
+
+    const leader = people.find(p => p.id === g.manager);
+    const leaderName = leader ? leader.name : '未指派';
+
+    return `
+      <div class="group-card ${isForeign ? 'foreign-group-card' : ''}" data-group-id="${esc(g.id)}">
+        <div class="group-card-top">
+          <div class="group-card-name-row">
+            <span class="group-card-title editable-title" onclick="${isManaged ? `renameGroupPrompt('${esc(g.id)}')` : ''}" title="${isManaged ? '點擊修改組別名稱' : ''}">
+              ${esc(g.name)}
+            </span>
+            <div class="group-card-actions">
+              ${isManaged ? `
+                <button class="mini-icon-btn" onclick="toggleGroupHide('${esc(g.id)}')" title="隱藏">✕</button>
+              ` : ''}
+            </div>
+          </div>
+          <div class="group-leader-row ${isForeign ? 'foreign' : ''}" onclick="${isManaged ? `changeGroupManagerDialog('${esc(g.id)}')` : ''}" title="${isManaged ? '點擊更換組長人選' : ''}">
+            <div style="display:flex; align-items:center; gap:4px;">
+              <span>👤</span>
+              <span>組長:</span>
+              <b>${esc(leaderName)}</b>
+            </div>
+          </div>
+        </div>
+
+        <!-- 直向直式成員清單 (非管轄部門全空，僅秀出調動過去的人) -->
+        <div class="group-card-body" style="${isForeign && displayMembers.length === 0 ? 'min-height:90px; justify-content:center;' : ''}">
+          ${displayMembers.map(p => {
+            const isLeader = g.manager === p.id;
+            const personChanges = changes.filter(c => c.personId === p.id);
+            const isChanged = personChanges.length > 0;
+            const hoverTitle = isChanged 
+              ? `【異動項目】\n` + personChanges.map(c => `• ${c.type}：原「${c.from || '無'}」➔ 新「${c.to}」`).join('\n')
+              : '';
+            return `
+              <div class="person-item ${isLeader ? 'is-leader-item' : ''} ${isChanged ? 'is-changed' : ''} ${selected.has(p.id) ? 'selected' : ''}" 
+                   draggable="true" 
+                   data-person-id="${esc(p.id)}" 
+                   onclick="onPersonCardClick(event, '${esc(p.id)}')"
+                   title="${esc(hoverTitle)}">
+                <div class="person-item-left" style="padding-left:2px;">
+                  <div class="person-info">
+                    <div class="person-name-row">
+                      <span class="person-name" style="font-weight:700; font-size:13.5px;">${esc(p.name)}</span>
+                      <span class="person-id-tag" style="color:#64748b; font-size:11.5px;">(${esc(p.id)})</span>
+                      ${isLeader ? '<span style="font-size:10px; background:#fef3c7; color:#92400e; padding:1px 5px; border-radius:3px; font-weight:800; margin-left:4px;">組長</span>' : ''}
+                    </div>
+                    <div class="person-title-row" style="font-size:12px; color:#475569; margin-top:1px;">
+                      ${esc(cleanTitle(p.profTitle || p.title))}
+                    </div>
+                  </div>
+                </div>
+                ${isManaged || isChanged ? `
+                  <button class="btn-edit-person" onclick="event.stopPropagation(); openEditPersonModal('${esc(p.id)}')" title="職務與彈性欄位設定" style="${isChanged ? 'border-color:#eab308; background:#fef08a;' : ''}">
+                    ✏️
+                  </button>
+                ` : ''}
+              </div>
+            `;
+          }).join('')}
+
+          ${isForeign ? `
+            <div class="target-drop-hint" style="margin-top:${displayMembers.length > 0 ? '6px' : '0'};">
+              📥 可拖曳人員至此
+            </div>
+          ` : ''}
+        </div>
+      </div>
+    `;
+  }
+
+  /* =========================================================
+   * 4. 叫出目標部門 (Target Dept) 互動視窗 (支援一次複選多個部門)
+   * ========================================================= */
+  $('#btnSummonTarget').onclick = () => openSummonTargetModal();
+
+  let activeSummonDivId = 'D1';
+  let summonSelectedDeptIds = new Set();
+
+  window.openSummonTargetModal = function() {
+    const curLoc = locateDept(focusDeptId);
+    if (curLoc && curLoc.division) {
+      activeSummonDivId = curLoc.division.id;
+    }
+    summonSelectedDeptIds.clear();
+    renderSummonModalView();
+  };
+
+  function renderSummonModalView() {
+    const body = renderSummonModalContent();
+    const foot = renderSummonModalFoot();
+    openModal('🎯 叫出目標部門 (支援一次複選多個部門)', body, foot);
+  }
+
+  window.switchSummonDivision = function(divId) {
+    collectCurrentTabSelections();
+    activeSummonDivId = divId;
+    const modalBody = $('#modalBody');
+    const modalFooter = $('#modalFooter');
+    if (modalBody) modalBody.innerHTML = renderSummonModalContent();
+    if (modalFooter) modalFooter.innerHTML = renderSummonModalFoot();
+  };
+
+  function collectCurrentTabSelections() {
+    document.querySelectorAll('.chk-summon-dept').forEach(chk => {
+      const dId = chk.getAttribute('data-dept-id');
+      if (!chk.disabled) {
+        if (chk.checked) summonSelectedDeptIds.add(dId);
+        else summonSelectedDeptIds.delete(dId);
+      }
+    });
+  }
+
+  window.onSummonDeptCheckChange = function(deptId, isChecked) {
+    if (isChecked) summonSelectedDeptIds.add(deptId);
+    else summonSelectedDeptIds.delete(deptId);
+    updateSummonCountUI();
+  };
+
+  window.selectAllSummonDeptsInDiv = function() {
+    const curDiv = org.find(d => d.id === activeSummonDivId) || org[0];
+    const deptsInDiv = curDiv.depts.filter(dep => dep.id !== focusDeptId && !targetDeptIds.has(dep.id));
+    deptsInDiv.forEach(d => {
+      summonSelectedDeptIds.add(d.id);
+      const chk = document.getElementById(`chk_dept_${d.id}`);
+      if (chk) chk.checked = true;
+    });
+    updateSummonCountUI();
+  };
+
+  window.clearAllSummonDeptsInDiv = function() {
+    const curDiv = org.find(d => d.id === activeSummonDivId) || org[0];
+    curDiv.depts.forEach(d => {
+      summonSelectedDeptIds.delete(d.id);
+      const chk = document.getElementById(`chk_dept_${d.id}`);
+      if (chk && !chk.disabled) chk.checked = false;
+    });
+    updateSummonCountUI();
+  };
+
+  function updateSummonCountUI() {
+    const count = summonSelectedDeptIds.size;
+    const countBadge = $('#summonSelectedCount');
+    if (countBadge) countBadge.textContent = count;
+    const btn = $('#btnConfirmBatchSummon');
+    if (btn) {
+      btn.textContent = `🎯 一次叫出所選部門 (${count})`;
+      btn.style.opacity = count > 0 ? '1' : '0.6';
+    }
+  }
+
+  function renderSummonModalFoot() {
+    const count = summonSelectedDeptIds.size;
+    return `
+      <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
+        <div style="font-size:13px; color:#475569;">
+          已選擇 <b id="summonSelectedCount" style="color:#2563eb; font-size:15px;">${count}</b> 個目標部門
+        </div>
+        <div style="display:flex; gap:8px;">
+          <button class="btn-action" onclick="closeModal()">取消</button>
+          <button class="btn-action primary" id="btnConfirmBatchSummon" onclick="confirmBatchSummonDepts()" style="padding:6px 16px; font-weight:700; ${count === 0 ? 'opacity:0.6;' : ''}">
+            🎯 一次叫出所選部門 (${count})
+          </button>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderSummonModalContent() {
+    const curDiv = org.find(d => d.id === activeSummonDivId) || org[0];
+    const deptsInDiv = curDiv.depts.filter(dep => dep.id !== focusDeptId);
+    const unsummonedCount = deptsInDiv.filter(dep => !targetDeptIds.has(dep.id)).length;
+
+    const tabsHtml = `
+      <div style="display:flex; gap:6px; margin-bottom:12px; background:#f1f5f9; padding:5px; border-radius:8px; border:1px solid #cbd5e1;">
+        ${org.map(d => {
+          const isAct = d.id === curDiv.id;
+          return `
+            <button type="button" 
+                    class="btn-div-tab ${isAct ? 'active' : ''}"
+                    onclick="switchSummonDivision('${esc(d.id)}')"
+                    style="flex:1; padding:8px 8px; font-size:13.5px; font-weight:800; border-radius:6px; border:none; cursor:pointer;
+                           background:${isAct ? '#2563eb' : 'transparent'}; 
+                           color:${isAct ? '#ffffff' : '#475569'};
+                           box-shadow:${isAct ? '0 1px 3px rgba(37,99,235,0.3)' : 'none'};
+                           transition:all 0.15s;">
+              ${esc(d.shortName || d.name)}
+            </button>
+          `;
+        }).join('')}
+      </div>
+    `;
+
+    const toolbarHtml = `
+      <div style="display:flex; justify-content:space-between; align-items:center; background:#f8fafc; border:1px solid #e2e8f0; padding:6px 10px; border-radius:6px; margin-bottom:12px;">
+        <div style="font-size:12.5px; color:#475569;">
+          <b>${esc(curDiv.shortName || curDiv.name)}</b> (共 ${deptsInDiv.length} 部門)
+        </div>
+        <div style="display:flex; gap:6px;">
+          <button type="button" class="btn-action" style="padding:3px 9px; font-size:12px;" onclick="selectAllSummonDeptsInDiv()">
+            ☑️ 全選此分處 (${unsummonedCount})
+          </button>
+          <button type="button" class="btn-action" style="padding:3px 9px; font-size:12px;" onclick="clearAllSummonDeptsInDiv()">
+            ⬜ 清除勾選
+          </button>
+        </div>
+      </div>
+    `;
+
+    let deptListHtml = '';
+    if (deptsInDiv.length === 0) {
+      deptListHtml = `<div style="text-align:center; padding:30px; color:#94a3b8; font-size:13px;">該事業處無其他可叫出之部門（或為目前關注部門）</div>`;
+    } else {
+      deptListHtml = `
+        <div style="display:flex; flex-direction:column; gap:10px; max-height:380px; overflow-y:auto; padding-right:4px;">
+          ${deptsInDiv.map(dep => {
+            const isAlreadySummoned = targetDeptIds.has(dep.id);
+            const isChecked = isAlreadySummoned || summonSelectedDeptIds.has(dep.id);
+            const deptMembers = people.filter(p => dep.groups.some(g => g.id === p.group));
+            return `
+              <div style="border:1.5px solid ${isChecked ? '#93c5fd' : '#cbd5e1'}; border-radius:8px; padding:10px 12px; background:${isChecked ? '#f8faff' : '#ffffff'}; box-shadow:0 1px 2px rgba(0,0,0,0.03); transition:all 0.15s;">
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
+                  <label style="display:flex; align-items:center; gap:8px; cursor:pointer; user-select:none;">
+                    <input type="checkbox" 
+                           class="chk-summon-dept" 
+                           id="chk_dept_${esc(dep.id)}" 
+                           data-dept-id="${esc(dep.id)}" 
+                           ${isAlreadySummoned ? 'disabled checked' : (isChecked ? 'checked' : '')} 
+                           onchange="onSummonDeptCheckChange('${esc(dep.id)}', this.checked)"
+                           style="width:16px; height:16px; cursor:pointer;" />
+                    <b style="font-size:14px; color:#1e293b;">📁 ${esc(dep.name)}</b>
+                    <span style="font-size:12px; color:#64748b;">(${deptMembers.length} 人 / ${dep.groups.length} 組)</span>
+                  </label>
+                  ${isAlreadySummoned ? `
+                    <span style="font-size:12px; color:#059669; font-weight:700; background:#ecfdf5; border:1px solid #a7f3d0; padding:2px 8px; border-radius:4px;">
+                      ✓ 已在工作台
+                    </span>
+                  ` : `
+                    <button class="btn-action primary" style="padding:3px 10px; font-size:12px;" onclick="confirmAddTargetDept('${esc(dep.id)}')">
+                      🎯 立即叫出
+                    </button>
+                  `}
+                </div>
+                <div style="font-size:11.5px; color:#64748b; margin-bottom:5px;">
+                  勾選欲直接展開之組別（預設皆隱藏，亦可在叫出後點選上方組別按鈕展開）：
+                </div>
+                <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                  ${dep.groups.map(g => {
+                    const gCount = people.filter(p => p.group === g.id).length;
+                    return `
+                      <label style="display:inline-flex; align-items:center; gap:4px; font-size:11.5px; background:#f8fafc; border:1px solid #e2e8f0; padding:2px 7px; border-radius:4px; cursor:pointer;">
+                        <!-- 預設全部組別的勾勾都先消失 (未勾選) -->
+                        <input type="checkbox" id="chk_target_group_${esc(g.id)}" />
+                        <span style="font-weight:600; color:#334155;">${esc(g.name)}</span>
+                        <span style="font-size:10.5px; color:#94a3b8;">(${gCount})</span>
+                      </label>
+                    `;
+                  }).join('')}
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `;
+    }
+
+    return tabsHtml + toolbarHtml + deptListHtml;
+  }
+
+  window.confirmAddTargetDept = function(deptId) {
+    const loc = locateDept(deptId);
+    if (!loc) return;
+
+    targetDeptIds.add(deptId);
+
+    loc.department.groups.forEach(g => {
+      const chk = document.getElementById(`chk_target_group_${g.id}`);
+      if (chk && chk.checked) {
+        hiddenGroupIds.delete(g.id);
+      } else {
+        hiddenGroupIds.add(g.id);
+      }
+    });
+
+    closeModal();
+    render();
+    toast(`已叫出【${loc.department.name}】（可點選上方按鈕展開各組）`);
+  };
+
+  window.confirmBatchSummonDepts = function() {
+    collectCurrentTabSelections();
+    if (summonSelectedDeptIds.size === 0) {
+      toast('請先勾選至少一個欲叫出的目標部門');
+      return;
+    }
+
+    const addedNames = [];
+    summonSelectedDeptIds.forEach(deptId => {
+      const loc = locateDept(deptId);
+      if (loc && !targetDeptIds.has(deptId)) {
+        targetDeptIds.add(deptId);
+        addedNames.push(loc.department.name);
+        loc.department.groups.forEach(g => {
+          const chk = document.getElementById(`chk_target_group_${g.id}`);
+          if (chk && chk.checked) {
+            hiddenGroupIds.delete(g.id);
+          } else {
+            hiddenGroupIds.add(g.id);
+          }
+        });
+      }
+    });
+
+    summonSelectedDeptIds.clear();
+    closeModal();
+    render();
+    if (addedNames.length > 0) {
+      toast(`已成功一次叫出【${addedNames.join('、')}】共 ${addedNames.length} 個部門！`);
+    } else {
+      toast('所選部門皆已在工作台中');
+    }
+  };
+
+  window.removeTargetDept = function(deptId) {
+    targetDeptIds.delete(deptId);
+    render();
+  };
+
+  /* =========================================================
+   * 5. 新增部門
+   * ========================================================= */
+    /* =========================================================
+   * 新增組別 (Quick Add Group)
+   * ========================================================= */
+  window.quickAddGroup = function(deptId) {
+    const curDept = locateDept(deptId || focusDeptId);
+    if (!curDept) return;
+    const deptName = curDept.department.name;
+
+    const body = `
+      <div class="form-group">
+        <label class="form-label">所屬部門</label>
+        <input type="text" class="form-control" value="${esc(deptName)}" disabled style="background:#f1f5f9;" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">新組別名稱</label>
+        <input type="text" id="modalNewGroupName" class="form-control" placeholder="例如：創新研發組、硬體測試組..." />
+      </div>
+    `;
+
+    const foot = `
+      <button class="btn-action" onclick="closeModal()">取消</button>
+      <button class="btn-action primary" onclick="submitQuickAddGroup('${esc(curDept.department.id)}')">確認新增</button>
+    `;
+
+    openModal('新增組別', body, foot);
+    setTimeout(() => {
+      const inp = $('#modalNewGroupName');
+      if (inp) inp.focus();
+    }, 100);
+  };
+
+  window.submitQuickAddGroup = function(deptId) {
+    const name = ($('#modalNewGroupName')?.value || '').trim();
+    if (!name) {
+      alert('請輸入組別名稱');
+      return;
+    }
+    const curDept = locateDept(deptId);
+    if (!curDept) return;
+
+    const newGid = deptId + '_G_' + Date.now();
+    const newGroup = {
+      id: newGid,
+      code: 'G_' + Math.floor(Math.random() * 900 + 100),
+      name: name,
+      manager: ''
+    };
+
+    curDept.department.groups.push(newGroup);
+    hiddenGroupIds.delete(newGid);
+    closeModal();
+    render();
+    toast(`已成功新增組別【${name}】`);
+  };
+
+  window.openAddDeptModal = function() {
+    const curDept = locateDept(focusDeptId);
+    const curDivId = curDept ? curDept.division.id : org[0].id;
+
+    const body = `
+      <div class="form-group">
+        <label class="form-label">所屬事業處</label>
+        <select id="modalNewDeptDiv" class="form-control">
+          ${org.map(d => `
+            <option value="${d.id}" ${d.id === curDivId ? 'selected' : ''}>🏢 ${esc(d.name)}</option>
+          `).join('')}
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">部門名稱</label>
+        <input type="text" id="modalNewDeptName" class="form-control" placeholder="例如：商用研三部" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">初始組別名稱</label>
+        <input type="text" id="modalNewDeptGroup" class="form-control" value="開發一組" />
+      </div>
+    `;
+
+    const foot = `
+      <button class="btn-action" onclick="closeModal()">取消</button>
+      <button class="btn-action primary" onclick="submitAddDept()">確認建立</button>
+    `;
+
+    openModal('新增部門', body, foot);
+  };
+
+  window.submitAddDept = function() {
+    const divId = $('#modalNewDeptDiv').value;
+    const name = ($('#modalNewDeptName').value || '').trim();
+    const groupName = ($('#modalNewDeptGroup').value || '').trim() || '第一組';
+
+    if (!name) {
+      alert('請輸入部門名稱');
+      return;
+    }
+
+    const div = locateDivision(divId);
+    if (!div) return;
+
+    const newDeptId = 'DEPT_' + Date.now();
+    const newGid = 'G_' + Date.now();
+    const newDept = {
+      id: newDeptId,
+      code: 'NEW_' + Math.floor(Math.random() * 900 + 100),
+      name: name,
+      groups: [
+        { id: newGid, code: '1010', name: groupName, manager: '' }
+      ]
+    };
+
+    div.depts.push(newDept);
+
+    changes.push({
+      deptId: newDeptId,
+      orgAction: 'add_dept',
+      name: name,
+      type: '新增部門',
+      from: '未建立',
+      to: `${div.name} / ${name}`
+    });
+
+    closeModal();
+    focusDeptId = newDeptId;
+    initFocusDeptOptions();
+    render();
+    toast(`已在【${div.name}】建立【${name}】`);
+  };
+
+  /* =========================================================
+   * 6. 人員設定：全下拉選單 ＋ 8個人員類別在異動備註正上方 (Requirement 2 & 3)
+   * ========================================================= */
+  window.openEditPersonModal = function(pid) {
+    const p = people.find(item => item.id === pid);
+    const orig = initialPeople.find(item => item.id === pid) || p;
+    if (!p) return;
+
+    const allGroups = [];
+    org.forEach(div => {
+      div.depts.forEach(dep => {
+        dep.groups.forEach(g => {
+          allGroups.push({ div, dep, g });
+        });
+      });
+    });
+
+    const curDomain = p.careerDomain || Object.keys(careerTree)[0];
+    const funcOptions = Object.keys(careerTree[curDomain] || {});
+    const curFunc = funcOptions.includes(p.functionCat) ? p.functionCat : (funcOptions[0] || '');
+    const roleOptions = (careerTree[curDomain] && careerTree[curDomain][curFunc]) || [];
+    const curRole = roleOptions.includes(p.profRole) ? p.profRole : (roleOptions[0] || '');
+
+    const currentCleanProf = cleanTitle(p.profTitle || p.title);
+
+    const body = `
+      <div style="background:#f1f5f9; padding:8px 12px; border-radius:8px; margin-bottom:12px; display:flex; align-items:center; gap:8px;">
+        <div class="person-avatar" style="width:32px; height:32px; font-size:14px;">${esc(p.name[0])}</div>
+        <div>
+          <b style="font-size:15px; color:#0f172a;">${esc(p.name)}</b>
+          <span style="font-size:12px; color:#64748b;">(工號：${esc(p.id)})</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">所屬組別 / 部門</label>
+        <select id="editPersonGroup" class="form-control">
+          ${allGroups.map(item => `
+            <option value="${item.g.id}" ${item.g.id === p.group ? 'selected' : ''}>
+              ${esc(item.div.name)} / ${esc(item.dep.name)} / ${esc(item.g.name)}
+            </option>
+          `).join('')}
+        </select>
+      </div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+        <div class="form-group">
+          <!-- 專業職稱無 (一)(二)(三) - Requirement 2 -->
+          <label class="form-label">專業職稱</label>
+          <select id="editPersonProfTitle" class="form-control">
+            ${officialProfTitles.map(t => `
+              <option value="${esc(t)}" ${currentCleanProf === t ? 'selected' : ''}>${esc(t)}</option>
+            `).join('')}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">管理職稱</label>
+          <select id="editPersonMgmtTitle" class="form-control">
+            ${officialMgmtTitles.map(m => `
+              <option value="${esc(m)}" ${p.mgmtTitle === m ? 'selected' : ''}>${esc(m)}</option>
+            `).join('')}
+          </select>
+        </div>
+      </div>
+
+      <!-- 三級嚴密聯動彈性欄位 (無多餘外框) -->
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+        <div class="form-group">
+          <label class="form-label">職涯領域</label>
+          <select id="editPersonDomain" class="form-control" onchange="onDomainChange()">
+            ${Object.keys(careerTree).map(d => `
+              <option value="${esc(d)}" ${curDomain === d ? 'selected' : ''}>${esc(d)}</option>
+            `).join('')}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">功能類別</label>
+          <select id="editPersonFunction" class="form-control" onchange="onFunctionChange()">
+            ${funcOptions.map(f => `
+              <option value="${esc(f)}" ${curFunc === f ? 'selected' : ''}>${esc(f)}</option>
+            `).join('')}
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">專業角色</label>
+        <select id="editPersonRole" class="form-control">
+          ${roleOptions.map(r => `
+            <option value="${esc(r)}" ${curRole === r ? 'selected' : ''}>${esc(r)}</option>
+          `).join('')}
+        </select>
+      </div>
+
+      <!-- 8個人員類別，移至異動備註上面一個的位置 (Requirement 3) -->
+      <div class="form-group">
+        <label class="form-label">
+          人員類別
+          <span style="font-size:11px; color:#64748b; font-weight:normal;">(※ 此欄位後續由 HR 進行核定)</span>
+        </label>
+        <select id="editPersonCategory" class="form-control">
+          ${officialCategories.map(cat => `
+            <option value="${esc(cat)}" ${p.category === cat ? 'selected' : ''}>${esc(cat)}</option>
+          `).join('')}
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">異動備註 (選填)</label>
+        <input type="text" id="editPersonNote" class="form-control" placeholder="填寫調動原因說明" />
+      </div>
+    `;
+
+    const foot = `
+      <button class="btn-action" onclick="closeModal()">取消</button>
+      <button class="btn-action primary" onclick="submitEditPerson('${esc(pid)}')">儲存設定</button>
+    `;
+
+    openModal(`同仁設定：${p.name}`, body, foot);
+  };
+
+  window.onDomainChange = function() {
+    const domain = $('#editPersonDomain').value;
+    const funcSel = $('#editPersonFunction');
+    const roleSel = $('#editPersonRole');
+
+    const funcs = Object.keys(careerTree[domain] || {});
+    funcSel.innerHTML = funcs.map(f => `<option value="${esc(f)}">${esc(f)}</option>`).join('');
+
+    onFunctionChange();
+  };
+
+  window.onFunctionChange = function() {
+    const domain = $('#editPersonDomain').value;
+    const func = $('#editPersonFunction').value;
+    const roleSel = $('#editPersonRole');
+
+    const roles = (careerTree[domain] && careerTree[domain][func]) || [];
+    roleSel.innerHTML = roles.map(r => `<option value="${esc(r)}">${esc(r)}</option>`).join('');
+  };
+
+  window.submitEditPerson = function(pid) {
+    const p = people.find(item => item.id === pid);
+    const orig = initialPeople.find(item => item.id === pid);
+    if (!p || !orig) return;
+
+    const newGroup = $('#editPersonGroup').value;
+    const newProf = cleanTitle($('#editPersonProfTitle').value);
+    const newMgmt = $('#editPersonMgmtTitle').value;
+    const newCat = $('#editPersonCategory').value;
+    const newDomain = $('#editPersonDomain').value;
+    const newFunc = $('#editPersonFunction').value;
+    const newRole = $('#editPersonRole').value;
+
+    // 1. 調組檢查
+    if (newGroup !== p.group) {
+      const ok = executeMoveCheck(pid, newGroup);
+      if (!ok) return;
+    }
+
+    // 2. 專業職稱異動
+    const origCleanProf = cleanTitle(orig.profTitle);
+    if (newProf !== origCleanProf) {
+      let ch = changes.find(c => c.personId === pid && c.type === '專業職稱異動');
+      if (ch) ch.to = newProf;
+      else changes.push({ personId: pid, name: p.name, type: '專業職稱異動', from: origCleanProf, to: newProf });
+      p.profTitle = newProf;
+      p.title = newProf;
+    } else {
+      changes = changes.filter(c => !(c.personId === pid && c.type === '專業職稱異動'));
+      p.profTitle = newProf;
+      p.title = newProf;
+    }
+
+    // 3. 管理職稱異動
+    if (newMgmt !== orig.mgmtTitle) {
+      let ch = changes.find(c => c.personId === pid && c.type === '管理職稱異動');
+      if (ch) ch.to = newMgmt;
+      else changes.push({ personId: pid, name: p.name, type: '管理職稱異動', from: orig.mgmtTitle, to: newMgmt });
+      p.mgmtTitle = newMgmt;
+    } else {
+      changes = changes.filter(c => !(c.personId === pid && c.type === '管理職稱異動'));
+      p.mgmtTitle = newMgmt;
+    }
+
+    // 4. 類別異動
+    if (newCat !== orig.category) {
+      let ch = changes.find(c => c.personId === pid && c.type === '人員類別異動');
+      if (ch) ch.to = newCat;
+      else changes.push({ personId: pid, name: p.name, type: '人員類別異動', from: orig.category, to: newCat });
+      p.category = newCat;
+    } else {
+      changes = changes.filter(c => !(c.personId === pid && c.type === '人員類別異動'));
+      p.category = newCat;
+    }
+
+    // 5. 彈性欄位
+    p.careerDomain = newDomain;
+    p.functionCat = newFunc;
+    p.profRole = newRole;
+
+    closeModal();
+    render();
+    toast(`已更新【${p.name}】設定`);
+  };
+
+  /* =========================================================
+   * 7. 拖曳移轉與組長跨部門調動
+   * ========================================================= */
+  function executeMoveCheck(pid, targetGid) {
+    const p = people.find(item => item.id === pid);
+    if (!p) return false;
+
+    const curGroupLoc = locateGroup(p.group);
+    const targetGroupLoc = locateGroup(targetGid);
+    if (!curGroupLoc || !targetGroupLoc) return false;
+
+    const isCurrentManager = curGroupLoc.group.manager === pid;
+    let vacatedGroupId = null;
+
+    if (isCurrentManager) {
+      const isDiffDept = curGroupLoc.department.id !== targetGroupLoc.department.id;
+      if (isDiffDept) {
+        const msg = `⚠️【${p.name}】為【${curGroupLoc.group.name}】組長，調至其他部門將解除原組長職務。\n是否確定調動？`;
+        if (!confirm(msg)) {
+          return false;
+        }
+        vacatedGroupId = curGroupLoc.group.id;
+        curGroupLoc.group.manager = '';
+      }
+    }
+
+    const initP = initialPeople.find(item => item.id === pid);
+    const originalGroup = initP ? initP.group : p.group;
+
+    p.group = targetGid;
+    p._movedAt = Date.now() + Math.random(); // 移動至新部門組別時，記錄最新調動順序以排至最上方
+
+    if (targetGid === originalGroup) {
+      changes = changes.filter(c => !(c.personId === pid && c.type === '部門 / 組別調動'));
+      const initG = locateGroup(originalGroup, true);
+      if (initG && initG.group.manager === pid) {
+        targetGroupLoc.group.manager = pid;
+        changes = changes.filter(c => !(c.groupId === originalGroup && c.orgAction === 'change_group_manager'));
+      }
+    } else {
+      const pathDiff = formatPathDiff(originalGroup, targetGid);
+      let ch = changes.find(c => c.personId === pid && c.type === '部門 / 組別調動');
+      if (ch) {
+        ch.to = pathDiff.to;
+        ch.newGroupId = targetGid;
+      } else {
+        changes.push({
+          personId: pid,
+          name: p.name,
+          type: '部門 / 組別調動',
+          from: pathDiff.from,
+          to: pathDiff.to,
+          oldGroup: originalGroup,
+          newGroupId: targetGid
+        });
+      }
+    }
+
+    if (vacatedGroupId) {
+      const vLoc = locateGroup(vacatedGroupId);
+      if (vLoc && !vLoc.group.manager) {
+        setTimeout(() => {
+          if (confirm(`【${vLoc.group.name}】目前組長出缺，是否現在為該組指派新組長？`)) {
+            changeGroupManagerDialog(vacatedGroupId);
+          }
+        }, 200);
+      }
+    }
+
+    return true;
+  }
+
+  function bindDragAndDropEvents() {
+    renderSelectionUI();
+
+    $$('.person-item').forEach(el => {
+      el.ondragstart = ev => {
+        const pid = el.dataset.personId;
+        if (!selected.has(pid)) {
+          selected.add(pid);
+          renderSelectionUI();
+        }
+        ev.dataTransfer.setData('text/plain', JSON.stringify(Array.from(selected)));
+        ev.dataTransfer.effectAllowed = 'move';
+
+        // Custom drag ghost badge for batch moving
+        if (selected.size > 1) {
+          const badge = document.createElement('div');
+          badge.style.position = 'absolute';
+          badge.style.top = '-9999px';
+          badge.style.background = '#2563eb';
+          badge.style.color = '#ffffff';
+          badge.style.padding = '6px 12px';
+          badge.style.borderRadius = '20px';
+          badge.style.fontWeight = 'bold';
+          badge.style.fontSize = '13px';
+          badge.style.boxShadow = '0 4px 10px rgba(0,0,0,0.25)';
+          badge.textContent = `📦 批次拖曳 ${selected.size} 位同仁`;
+          document.body.appendChild(badge);
+          ev.dataTransfer.setDragImage(badge, 20, 20);
+          setTimeout(() => badge.remove(), 500);
+        }
+      };
+    });
+
+    $$('.group-card').forEach(card => {
+      card.ondragover = ev => {
+        ev.preventDefault();
+        card.classList.add('drag-over');
+      };
+      card.ondragleave = () => card.classList.remove('drag-over');
+      card.ondrop = ev => {
+        ev.preventDefault();
+        card.classList.remove('drag-over');
+        try {
+          const raw = ev.dataTransfer.getData('text/plain');
+          const personIds = JSON.parse(raw);
+          const targetGid = card.dataset.groupId;
+          if (personIds && targetGid) {
+            let movedCount = 0;
+            personIds.forEach(pid => {
+              if (executeMoveCheck(pid, targetGid)) movedCount++;
+            });
+            if (movedCount > 0) {
+              const loc = locateGroup(targetGid);
+              toast(`🎉 已成功批次調動 ${movedCount} 位同仁至【${loc.group.name}】`);
+              selected.clear();
+              render();
+            }
+          }
+        } catch (e) { console.error(e); }
+      };
+    });
+  }
+
+  /* =========================================================
+   * 批次選取與滑鼠框選 (Marquee Box Selection)
+   * ========================================================= */
+  window.toggleSelectPerson = function(pid) {
+    if (selected.has(pid)) selected.delete(pid);
+    else selected.add(pid);
+    renderSelectionUI();
+  };
+
+  window.onPersonCardClick = function(ev, pid) {
+    if (ev.target.closest('.btn-edit-person, input, select, button, a')) return;
+    if (ev.shiftKey || ev.ctrlKey || ev.metaKey) {
+      toggleSelectPerson(pid);
+    } else {
+      // Direct click toggles selection for seamless multi-select
+      toggleSelectPerson(pid);
+    }
+  };
+
+  window.toggleSelectGroupMembers = function(gid) {
+    const groupMembers = people.filter(p => p.group === gid);
+    const allSelected = groupMembers.length > 0 && groupMembers.every(m => selected.has(m.id));
+    if (allSelected) {
+      groupMembers.forEach(m => selected.delete(m.id));
+    } else {
+      groupMembers.forEach(m => selected.add(m.id));
+    }
+    renderSelectionUI();
+  };
+
+  window.clearSelection = function() {
+    selected.clear();
+    renderSelectionUI();
+  };
+
+  function renderSelectionUI() {
+    // 1. Update card classes (blue border selection) without full page re-render
+    $$('.person-item').forEach(el => {
+      const pid = el.dataset.personId;
+      const isSel = selected.has(pid);
+      if (isSel) el.classList.add('selected');
+      else el.classList.remove('selected');
+    });
+
+    // 2. Update group header "全選" buttons
+    $$('.group-card').forEach(card => {
+      const gid = card.dataset.groupId;
+      const gm = people.filter(p => p.group === gid);
+      const allSel = gm.length > 0 && gm.every(m => selected.has(m.id));
+      const btn = card.querySelector('.group-card-actions button');
+      if (btn) btn.textContent = allSel ? '取消' : '全選';
+    });
+
+    // 3. Render Floating Batch Action Bar
+    const bar = $('#batchActionBar');
+    if (!bar) return;
+    if (selected.size === 0) {
+      bar.style.display = 'none';
+      return;
+    }
+
+    // Build list of all available groups
+    const availableGroups = [];
+    org.forEach(div => {
+      div.depts.forEach(dep => {
+        dep.groups.forEach(g => {
+          availableGroups.push({ div, dep, g });
+        });
+      });
+    });
+
+    bar.style.display = 'flex';
+    bar.innerHTML = `
+      <span class="batch-badge">已選取 ${selected.size} 人</span>
+      <span style="color:#94a3b8; font-size:12.5px;">👉 拖曳任一張卡片即可整批移轉，或點此：</span>
+      <select id="selBatchTargetGroup" class="batch-select">
+        ${availableGroups.map(item => `
+          <option value="${esc(item.g.id)}">
+            ${esc(item.dep.name)} - ${esc(item.g.name)} (${esc(item.div.shortName || item.div.name)})
+          </option>
+        `).join('')}
+      </select>
+      <button class="batch-btn primary" onclick="submitBatchMoveFromBar()">批次調動</button>
+      <button class="batch-btn" onclick="clearSelection()" style="color:#f87171;">✕ 清除選取</button>
+    `;
+  }
+
+  window.submitBatchMoveFromBar = function() {
+    const selGid = $('#selBatchTargetGroup')?.value;
+    if (!selGid || selected.size === 0) return;
+    const targetLoc = locateGroup(selGid);
+    if (!targetLoc) return;
+
+    let movedCount = 0;
+    const pids = Array.from(selected);
+    pids.forEach(pid => {
+      if (executeMoveCheck(pid, selGid)) movedCount++;
+    });
+
+    if (movedCount > 0) {
+      toast(`🎉 已成功批次調動 ${movedCount} 位同仁至【${targetLoc.department.name} - ${targetLoc.group.name}】`);
+      selected.clear();
+      render();
+    }
+  };
+
+  // Marquee Drag-to-Select on Canvas
+  let marqueeOrigin = null;
+  let marqueeBox = null;
+
+  document.addEventListener('mousedown', e => {
+    if (e.target.closest('.person-item, .group-card-head, button, input, select, textarea, .batch-action-bar, .modal-dialog, .pills-container, header, .sub-bar')) return;
+    marqueeOrigin = { x: e.clientX, y: e.clientY };
+    marqueeBox = document.createElement('div');
+    marqueeBox.className = 'selection-marquee-box';
+    document.body.appendChild(marqueeBox);
+  });
+
+  window.addEventListener('mousemove', e => {
+    if (!marqueeOrigin || !marqueeBox) return;
+    const left = Math.min(marqueeOrigin.x, e.clientX);
+    const top = Math.min(marqueeOrigin.y, e.clientY);
+    const width = Math.abs(e.clientX - marqueeOrigin.x);
+    const height = Math.abs(e.clientY - marqueeOrigin.y);
+    Object.assign(marqueeBox.style, {
+      left: left + 'px',
+      top: top + 'px',
+      width: width + 'px',
+      height: height + 'px'
+    });
+  });
+
+  window.addEventListener('mouseup', e => {
+    if (!marqueeOrigin || !marqueeBox) return;
+    const left = Math.min(marqueeOrigin.x, e.clientX);
+    const top = Math.min(marqueeOrigin.y, e.clientY);
+    const right = Math.max(marqueeOrigin.x, e.clientX);
+    const bottom = Math.max(marqueeOrigin.y, e.clientY);
+
+    if (right - left > 6 && bottom - top > 6) {
+      let added = false;
+      document.querySelectorAll('.person-item').forEach(el => {
+        const rect = el.getBoundingClientRect();
+        if (rect.left < right && rect.right > left && rect.top < bottom && rect.bottom > top) {
+          selected.add(el.dataset.personId);
+          added = true;
+        }
+      });
+      if (added) renderSelectionUI();
+    }
+    marqueeBox.remove();
+    marqueeBox = null;
+    marqueeOrigin = null;
+  });
+
+
+  /* =========================================================
+   * 8. 更換組長 (管理職排在最上方 + 乾淨簡潔 + 點擊即指派)
+   * ========================================================= */
+  function isManagementPerson(p) {
+    // 嚴格判定：僅有實際主管職稱（mgrTitle !== '無'）或正式列入「管理職涯」者才是管理職！
+    // 專業職稱中之「經理」、「副理」若無主管職且非管理職涯，則為一般專業職等 (例如 鄭O芬、葉O珍)
+    const hasMgrTitle = p.mgrTitle && p.mgrTitle !== '無';
+    const isMgmtCareer = p.careerDomain === '管理職涯';
+    return hasMgrTitle || isMgmtCareer;
+  }
+
+  function getMgmtCandidateScore(p) {
+    if (!isManagementPerson(p)) return 0;
+
+    const mgr = p.mgrTitle || '';
+    const prof = p.profTitle || '';
+    const domain = p.careerDomain || '';
+
+    let score = 20;
+    if (mgr === '組長') score += 100;
+    else if (['副部長', '部長', '副處長', '處長'].includes(mgr)) score += 80;
+    else if (mgr && mgr !== '無') score += 60;
+
+    if (domain === '管理職涯') score += 40;
+
+    if (prof.includes('經理') || prof.includes('協理')) score += 15;
+    else if (prof.includes('副理')) score += 10;
+    else if (prof.includes('主任')) score += 5;
+    return score;
+  }
+
+  window.changeGroupManagerDialog = function(gid) {
+    const loc = locateGroup(gid);
+    if (!loc) return;
+    const currentLeaderId = loc.group.manager;
+    const currentLeader = people.find(p => p.id === currentLeaderId);
+
+    let deptMembers = people.filter(p => {
+      const pLoc = locateGroup(p.group);
+      return pLoc && pLoc.department.id === loc.department.id;
+    });
+
+    // 管理職排在最上方
+    deptMembers.sort((a, b) => {
+      const scoreA = getMgmtCandidateScore(a);
+      const scoreB = getMgmtCandidateScore(b);
+      if (scoreA !== scoreB) return scoreB - scoreA;
+      return a.id.localeCompare(b.id);
+    });
+
+    window._candidatePool = deptMembers;
+    window._curGidForManager = gid;
+
+    const body = `
+      <div style="font-size: 13px; color:#475569; margin-bottom:12px;">
+        目前 <b>【${esc(loc.group.name)}】</b> 組長：
+        <b style="color:#2563eb;">👤 ${esc(currentLeader ? currentLeader.name : '未指派')}</b>
+      </div>
+
+      <div style="margin-bottom:10px;">
+        <input type="text" id="mgrSearchInput" class="form-control" placeholder="🔍 搜尋同仁姓名、工號或職稱..." oninput="filterMgrCandidates()" />
+      </div>
+
+      <div id="mgrCandidatesContainer" style="max-height:360px; overflow-y:auto; display:flex; flex-direction:column; gap:8px;">
+        ${renderMgrCandidatesHtml(deptMembers, currentLeaderId, gid)}
+      </div>
+    `;
+
+    openModal(`更換組長：${loc.group.name}`, body, '');
+  };
+
+  function renderMgrCandidatesHtml(list, currentLeaderId, gid) {
+    if (list.length === 0) {
+      return '<div style="color:#94a3b8; padding:20px; text-align:center;">查無符合條件之同仁</div>';
+    }
+
+    const curGid = gid || window._curGidForManager;
+    const mgmtCandidates = list.filter(m => getMgmtCandidateScore(m) >= 20);
+    const otherCandidates = list.filter(m => getMgmtCandidateScore(m) < 20);
+
+    let html = '';
+
+    // 1. 管理職同仁 (排在最上面，純淨白底卡片)
+    if (mgmtCandidates.length > 0) {
+      html += `
+        <div style="font-weight:800; font-size:12.5px; color:#1e293b; padding:4px 2px; border-bottom:1px solid #e2e8f0; margin-bottom:6px;">
+          管理職同仁 (${mgmtCandidates.length} 位)
+        </div>
+        <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap:8px; margin-bottom:10px;">
+          ${mgmtCandidates.map(m => renderCandidateCard(m, currentLeaderId, curGid)).join('')}
+        </div>
+      `;
+    }
+
+    // 2. 其他同仁
+    if (otherCandidates.length > 0) {
+      html += `
+        <div style="font-weight:800; font-size:12.5px; color:#64748b; padding:4px 2px; border-bottom:1px solid #e2e8f0; margin-bottom:6px;">
+          其他同仁 (${otherCandidates.length} 位)
+        </div>
+        <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap:8px;">
+          ${otherCandidates.map(m => renderCandidateCard(m, currentLeaderId, curGid)).join('')}
+        </div>
+      `;
+    }
+
+    return html;
+  }
+
+  function renderCandidateCard(m, currentLeaderId, gid) {
+    const isCur = m.id === currentLeaderId;
+    const isMgmt = m.mgrTitle && m.mgrTitle !== '無';
+    const isCareerMgmt = m.careerDomain === '管理職涯';
+    const curGroup = locateGroup(m.group)?.group.name || '';
+
+    return `
+      <div class="grid-select-btn" 
+           style="border:1.5px solid ${isCur ? '#2563eb' : '#cbd5e1'}; 
+                  background:${isCur ? '#eff6ff' : '#ffffff'}; 
+                  padding:8px 10px; border-radius:6px; cursor:pointer; transition:all 0.15s; box-shadow:0 1px 2px rgba(0,0,0,0.03);" 
+           onclick="executeChangeGroupManager('${esc(gid)}', '${esc(m.id)}')">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
+          <b style="font-size:13.5px; color:#1e293b;">👤 ${esc(m.name)}</b>
+          <div style="display:flex; gap:4px; align-items:center;">
+            ${isMgmt ? `<span style="font-size:10.5px; background:#f1f5f9; color:#0f172a; padding:1px 6px; border-radius:4px; font-weight:700; border:1px solid #cbd5e1;">${esc(m.mgrTitle)}</span>` : ''}
+            ${isCareerMgmt ? `<span style="font-size:10.5px; background:#f8fafc; color:#475569; padding:1px 5px; border-radius:4px; font-weight:600; border:1px solid #e2e8f0;">管理職涯</span>` : ''}
+            ${isCur ? `<span style="font-size:10.5px; background:#2563eb; color:#ffffff; padding:1px 6px; border-radius:4px; font-weight:800;">現任</span>` : ''}
+          </div>
+        </div>
+        <div style="font-size:11.5px; color:#64748b; display:flex; justify-content:space-between;">
+          <span>${esc(m.profTitle || '')}</span>
+          <span style="color:#94a3b8;">${esc(curGroup)} · ${esc(m.id)}</span>
+        </div>
+      </div>
+    `;
+  }
+
+  window.filterMgrCandidates = function() {
+    const q = ($('#mgrSearchInput')?.value || '').trim().toLowerCase();
+    const curLeaderId = locateGroup(window._curGidForManager)?.group.manager;
+    const filtered = (window._candidatePool || []).filter(p => {
+      return p.name.toLowerCase().includes(q) ||
+             p.id.toLowerCase().includes(q) ||
+             (p.profTitle || '').toLowerCase().includes(q) ||
+             (p.mgrTitle || '').toLowerCase().includes(q) ||
+             (p.careerDomain || '').toLowerCase().includes(q);
+    });
+    const c = $('#mgrCandidatesContainer');
+    if (c) c.innerHTML = renderMgrCandidatesHtml(filtered, curLeaderId, window._curGidForManager);
+  };
+
+  window.executeChangeGroupManager = function(gid, newManagerId) {
+    const loc = locateGroup(gid);
+    if (!loc) return;
+    const initialGroup = locateGroup(gid, true);
+    const initialManagerId = initialGroup ? initialGroup.group.manager : loc.group.manager;
+    const oldManager = people.find(p => p.id === loc.group.manager);
+    const newManager = people.find(p => p.id === newManagerId);
+
+    loc.group.manager = newManagerId;
+
+    // 異動紀錄 (與右側抽屜格式一致)
+    changes = changes.filter(c => !(c.type === '組長更換' && c.entityId === gid));
+    if (newManagerId !== initialManagerId) {
+      changes.push({
+        personId: newManagerId,
+        name: `${loc.group.name} 組長更換`,
+        type: '組長更換',
+        entityId: gid,
+        from: oldManager ? oldManager.name : '未指派',
+        to: newManager ? newManager.name : '未指派'
+      });
+    }
+
+    closeModal();
+    render();
+    toast(`已成功將【${loc.group.name}】組長設定為【${newManager ? newManager.name : newManagerId}】`);
+  };
+
+  /* =========================================================
+   * 9. 還原初始
+   * ========================================================= */
+  
+  /* =========================================================
+   * 快速搜尋同仁與職務編輯 (叫出特定同仁改職稱/職涯領域)
+   * ========================================================= */
+  function getDeptManagedPeople() {
+    const loc = locateDept(focusDeptId);
+    if (!loc) return [];
+    return people.filter(p => {
+      const pLoc = locateGroup(p.group);
+      return pLoc && pLoc.department.id === loc.department.id;
+    });
+  }
+
+  window.openQuickSearchPersonModal = function() {
+    const loc = locateDept(focusDeptId);
+    const deptName = loc ? loc.department.name : '';
+    const managed = getDeptManagedPeople();
+
+    const body = `
+      <div style="margin-bottom:12px;">
+        <input type="text" id="quickPersonSearchInput" class="form-control" 
+               placeholder="輸入姓名、工號或職稱搜尋..." 
+               oninput="filterQuickSearchPerson()" 
+               style="font-size:14px; padding:8px 12px; width:100%; box-sizing:border-box;" />
+      </div>
+
+      <div id="quickSearchResultsContainer" style="max-height:420px; overflow-y:auto; display:flex; flex-direction:column; gap:6px;">
+        ${renderQuickSearchResultsHtml(managed)}
+      </div>
+    `;
+
+    openModal(`搜尋同仁${deptName ? '（' + deptName + '）' : ''}`, body, '');
+    setTimeout(() => {
+      const inp = $('#quickPersonSearchInput');
+      if (inp && typeof inp.focus === 'function') inp.focus();
+    }, 100);
+  };
+
+  function renderQuickSearchResultsHtml(list) {
+    if (list.length === 0) {
+      return '<div style="color:#94a3b8; padding:24px; text-align:center; font-size:13.5px;">查無符合同仁</div>';
+    }
+
+    return list.map(p => {
+      const gLoc = locateGroup(p.group);
+      const groupName = gLoc ? gLoc.group.name : '';
+
+      return `
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 12px; background:#ffffff; border:1px solid #e2e8f0; border-radius:6px;">
+          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; font-size:13.5px;">
+            <b style="color:#0f172a;">${esc(p.name)}</b>
+            <span style="color:#64748b; font-size:12px;">${esc(p.id)}</span>
+            <span style="background:#f1f5f9; color:#475569; padding:1px 6px; border-radius:4px; font-size:12px;">${esc(groupName)}</span>
+            <span style="color:#334155;">${esc(p.profTitle || '')}</span>
+            <span style="color:#64748b; font-size:12px;">${esc(p.careerDomain || '')}</span>
+          </div>
+          <button class="btn-action primary" style="padding:4px 10px; font-size:12.5px; font-weight:600; flex-shrink:0; margin-left:8px;" onclick="openEditPersonFromQuickSearch('${esc(p.id)}')">
+            ✏️ 編輯
+          </button>
+        </div>
+      `;
+    }).join('');
+  }
+
+  window.filterQuickSearchPerson = function() {
+    const q = ($('#quickPersonSearchInput')?.value || '').trim().toLowerCase();
+    const c = $('#quickSearchResultsContainer');
+    if (!c) return;
+
+    const managed = getDeptManagedPeople();
+    if (!q) {
+      c.innerHTML = renderQuickSearchResultsHtml(managed);
+      return;
+    }
+
+    const matches = managed.filter(p => {
+      const gLoc = locateGroup(p.group);
+      const gName = gLoc ? gLoc.group.name : '';
+      return p.name.toLowerCase().includes(q) ||
+             p.id.toLowerCase().includes(q) ||
+             (p.profTitle || '').toLowerCase().includes(q) ||
+             (p.careerDomain || '').toLowerCase().includes(q) ||
+             gName.toLowerCase().includes(q);
+    });
+
+    c.innerHTML = renderQuickSearchResultsHtml(matches);
+  };
+
+  window.openEditPersonFromQuickSearch = function(pid) {
+    closeModal();
+    setTimeout(() => {
+      openEditPersonModal(pid);
+    }, 150);
+  };
+
+window.revertAllToInitial = function() {
+    if (!confirm('確定要還原所有異動，重設回最初的組織與人員狀態嗎？')) return;
+    org = structuredClone(initialOrg);
+    people = structuredClone(initialPeople);
+    changes = [];
+    selected.clear();
+    targetDeptIds.clear();
+    hideAllGroupsByDefault();
+    initFocusDeptOptions();
+    render();
+    toast('已完整還原至初始狀態');
+  };
+
+  /* =========================================================
+   * 10. 匯出組織圖 (組長最頂端 ＋ 無(一)(二)(三) ＋ 完整黑線串聯)
+   * ========================================================= */
+  window.openExportOrgModal = function() {
+    const curLoc = locateDept(focusDeptId);
+    const curDeptVisibleGroups = curLoc ? curLoc.department.groups.filter(g => !hiddenGroupIds.has(g.id) && g.name !== '主管' && g.name !== '部主管室') : [];
+    let totalScreenVisibleGroups = curDeptVisibleGroups.length;
+    targetDeptIds.forEach(tId => {
+      const tLoc = locateDept(tId);
+      if (tLoc) totalScreenVisibleGroups += tLoc.department.groups.filter(g => !hiddenGroupIds.has(g.id) && g.name !== '主管' && g.name !== '部主管室').length;
+    });
+
+    const body = `
+      <div style="font-size:13.5px; color:#334155; margin-bottom:16px; line-height:1.6;">
+        即將將目前工作台畫面上展開之組別（共 <b>${totalScreenVisibleGroups}</b> 組）匯出為組織架構圖 PDF。
+      </div>
+
+      <button class="btn-action primary" style="width:100%; padding:11px; justify-content:center; font-size:14px; font-weight:700;" onclick="exportOrgPDF()">
+        🖨️ 預覽並列印 PDF (目前畫面組別)
+      </button>
+    `;
+
+    openModal('匯出組織圖 (PDF)', body, '');
+  };
+
+  function getExportData(scope) {
+    let divs = [];
+    // 僅匯出畫面上目前顯示之部門與可見組別（不含主管室）
+    const curLoc = locateDept(focusDeptId);
+    if (curLoc) {
+      const visGroups = curLoc.department.groups.filter(g => !hiddenGroupIds.has(g.id) && g.name !== '主管' && g.name !== '部主管室');
+      divs.push({
+        ...curLoc.division,
+        depts: [{ ...curLoc.department, groups: visGroups }]
+      });
+    }
+    targetDeptIds.forEach(tId => {
+      const tLoc = locateDept(tId);
+      if (tLoc) {
+        const visGroups = tLoc.department.groups.filter(g => !hiddenGroupIds.has(g.id) && g.name !== '主管' && g.name !== '部主管室');
+        if (visGroups.length > 0) {
+          let divEntry = divs.find(d => d.id === tLoc.division.id);
+          if (!divEntry) {
+            divEntry = { ...tLoc.division, depts: [] };
+            divs.push(divEntry);
+          }
+          divEntry.depts.push({ ...tLoc.department, groups: visGroups });
+        }
+      }
+    });
+    return divs;
+  }
+
+  window.exportOrgPDF = function() {
+    try {
+      const scope = document.querySelector('input[name="exportScope"]:checked')?.value || 'current_screen';
+      const divs = getExportData(scope);
+
+      let html = `
+        <div style="padding:15px; color:#0f172a; width:max-content; min-width:100%;">
+          <div style="text-align:center; border-bottom:2px solid #0f172a; padding-bottom:6px; margin-bottom:20px;">
+            <h2 style="font-size:22px; margin:0; letter-spacing:1px;">鈊象電子股份有限公司 組織架構圖</h2>
+            <div style="font-size:11.5px; color:#475569; margin-top:4px;">產出日期：${new Date().toLocaleDateString()}</div>
+          </div>
+
+          <div style="display:flex; flex-direction:row; gap:40px; align-items:flex-start; justify-content:center;">
+      `;
+
+      divs.forEach(div => {
+        if (div.depts.length === 0) return;
+        html += `
+          <div style="display:flex; flex-direction:column; align-items:center;">
+            <!-- 事業處節點 -->
+            <div style="background:#1e3a8a; color:white; font-weight:800; font-size:15px; padding:8px 18px; border-radius:6px; box-shadow:0 2px 4px rgba(0,0,0,0.1); border:1.5px solid #0f172a;">
+              🏢 ${esc(div.name)}
+            </div>
+            <div style="width:2px; height:18px; background:#0f172a;"></div>
+
+            <div style="display:flex; flex-direction:row; gap:24px; align-items:flex-start; border-top:2px solid #0f172a; padding-top:14px; position:relative;">
+        `;
+
+        div.depts.forEach(dep => {
+          if (dep.groups.length === 0) return;
+          const leadership = getDeptLeadership(dep.id);
+
+          // 過濾掉若為「主管」或「部主管室」且其全員已在 leadership 節點中呈現者
+          const operationalGroups = dep.groups.filter(g => {
+            const members = people.filter(p => p.group === g.id);
+            if (members.length === 0) return false;
+            const isLeaderGroup = g.name.includes('主管');
+            if (isLeaderGroup) {
+              const allInLeadership = members.every(m => 
+                (leadership.minister && m.id === leadership.minister.id) ||
+                (leadership.deputies && leadership.deputies.some(d => d.id === m.id))
+              );
+              if (allInLeadership) return false;
+            }
+            return true;
+          });
+
+          const displayGroups = operationalGroups.length > 0 ? operationalGroups : dep.groups;
+
+          html += `
+            <div style="display:flex; flex-direction:column; align-items:center;">
+              <!-- 部門節點 -->
+              <div style="background:#2563eb; color:white; font-weight:800; font-size:13.5px; padding:6px 14px; border-radius:6px; border:1.5px solid #0f172a; white-space:nowrap; box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+                📁 ${esc(dep.name)}
+              </div>
+          `;
+
+          // 1. 部長節點 (白底藍框黑字，無icon，使用通用職級)
+          if (leadership.minister) {
+            html += `
+              <div style="width:2px; height:14px; background:#0f172a;"></div>
+              <div style="background:#ffffff; color:#0f172a; font-weight:800; font-size:14px; padding:6px 20px; border-radius:6px; border:2px solid #2563eb; box-shadow:0 1px 3px rgba(0,0,0,0.06); text-align:center; white-space:nowrap;">
+                <span style="color:#1d4ed8; font-weight:800; margin-right:4px;">${esc(leadership.minister.mgrTitle !== '無' ? leadership.minister.mgrTitle : '部長')}:</span>
+                <span>${esc(leadership.minister.name)}</span>
+                <span style="font-size:12.5px; color:#64748b; margin-left:4px;">(${esc(toStandardRankTitle(leadership.minister.profTitle || ''))})</span>
+              </div>
+            `;
+          }
+
+          // 2. 副部長節點 (淺藍底藍框黑字，無icon，使用通用職級)
+          if (leadership.deputies && leadership.deputies.length > 0) {
+            html += `
+              <div style="width:2px; height:14px; background:#0f172a;"></div>
+              <div style="display:flex; gap:10px; align-items:center; justify-content:center;">
+                ${leadership.deputies.map(deputy => `
+                  <div style="background:#eff6ff; color:#1e40af; font-weight:700; font-size:13.5px; padding:5px 18px; border-radius:6px; border:1.5px solid #93c5fd; box-shadow:0 1px 2px rgba(0,0,0,0.04); text-align:center; white-space:nowrap;">
+                    <span style="color:#2563eb; font-weight:800; margin-right:4px;">${esc(deputy.mgrTitle)}:</span>
+                    <span style="color:#0f172a; font-weight:700;">${esc(deputy.name)}</span>
+                    <span style="font-size:12px; color:#64748b; margin-left:4px;">(${esc(toStandardRankTitle(deputy.profTitle || ''))})</span>
+                  </div>
+                `).join('')}
+              </div>
+            `;
+          }
+
+          // 3. 各組別掛在副部長 (或部長) 下面
+          if (displayGroups.length > 0) {
+            html += `
+              <div style="width:2px; height:16px; background:#0f172a;"></div>
+              <div style="display:flex; flex-direction:row; gap:12px; align-items:flex-start; border-top:2px solid #0f172a; padding-top:12px;">
+            `;
+
+            displayGroups.forEach(g => {
+              const leader = people.find(p => p.id === g.manager);
+              const members = people.filter(p => p.group === g.id);
+
+              members.sort((a, b) => {
+                if (a.id === g.manager) return -1;
+                if (b.id === g.manager) return 1;
+                return 0;
+              });
+
+              html += `
+                <div style="display:flex; flex-direction:column; align-items:center;">
+                  <!-- 組別卡片 -->
+                  <div style="border:1.5px solid #0f172a; border-radius:6px; width:175px; padding:8px; background:#ffffff; box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+                    <div style="font-weight:800; font-size:13px; color:#0f172a; text-align:center; border-bottom:1px solid #cbd5e1; padding-bottom:4px; margin-bottom:5px;">
+                      ${esc(g.name)}
+                    </div>
+                    <div style="font-size:11.5px; color:#1e40af; background:#eff6ff; padding:3px 5px; border-radius:4px; margin-bottom:6px; border:1px solid #bfdbfe; font-weight:700;">
+                      👤 組長: ${esc(leader ? leader.name : '未指派')}
+                    </div>
+                    <!-- 成員垂直清單 (工號 + 姓名 + 職稱) -->
+                    <div style="display:flex; flex-direction:column; gap:3px;">
+                      ${members.map(m => `
+                      <div style="font-size:13px; padding:3px 6px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:4px; display:flex; justify-content:space-between; align-items:center; gap:8px;">
+                        <span style="color:#0f172a; font-weight:600;">${esc(m.name)}</span>
+                        <span style="color:#475569; font-size:12px; font-weight:600;">${esc(toStandardRankTitle(m.profTitle))}</span>
+                      </div>
+                    `).join('')}                    </div>
+                  </div>
+                </div>
+              `;
+            });
+
+            html += `</div>`; // end displayGroups
+          }
+
+          html += `</div>`; // end dep
+        });
+
+        html += `
+            </div>
+          </div>
+        `;
+      });
+
+      html += `
+          </div>
+        </div>
+      `;
+
+      const printWin = window.open('', '_blank');
+      if (!printWin) {
+        alert('請允許瀏覽器開啟彈跳視窗以進行組織圖預覽列印！');
+        return;
+      }
+      printWin.document.write(`
+      <!doctype html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <title>鈊象電子組織架構圖 - 列印與匯出 PDF</title>
+        <style>
+          @page {
+            size: landscape;
+            margin: 6mm;
+          }
+          * { box-sizing: border-box; }
+          body {
+            margin: 0;
+            padding: 10px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Microsoft JhengHei", sans-serif;
+            background: #ffffff;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+          }
+          @media print {
+            .no-print { display: none !important; }
+            body { padding: 0 !important; margin: 0 !important; }
+            .print-page-wrapper {
+              width: 100% !important;
+              overflow: visible !important;
+            }
+          }
+          .print-control-bar {
+            background: #0f172a;
+            color: #ffffff;
+            padding: 10px 18px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            font-size: 13px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+          }
+          .print-btn {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 7px 18px;
+            border-radius: 6px;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13.5px;
+            transition: all 0.15s;
+          }
+          .print-btn:hover { background: #1d4ed8; }
+        </style>
+      </head>
+      <body>
+
+    <!-- DEMO Top Notice Bar -->
+    <div style="background:linear-gradient(90deg, #d97706, #b45309); color:#ffffff; padding:8px 20px; font-size:13px; font-weight:700; display:flex; align-items:center; justify-content:space-between; box-shadow:0 2px 5px rgba(0,0,0,0.2); position:relative; z-index:9999;">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span style="background:#ffffff; color:#b45309; padding:2px 10px; border-radius:12px; font-size:12px; font-weight:800; letter-spacing:0.5px;">🧪 DEMO 示範測試版</span>
+        <span>⚠️ 本環境為系統模擬假資料（隨機生成同仁名冊 · 4大單位 8部門架構），僅供長官架構檢視與操作示範，非正式異動環境。</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span style="background:rgba(255,255,255,0.22); padding:3px 10px; border-radius:6px; font-size:11.5px; font-weight:600;">四個事業處：直屬 · 線上 · 商用 · 國外公司</span>
+      </div>
+    </div>
+        <div class="no-print print-control-bar">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-weight:800; font-size:14px;">🖨️ 組織圖列印預覽 (標準 100% 滿版輸出)</span>
+          </div>
+          <div>
+            <button class="print-btn" onclick="window.print()">
+              🖨️ 列印 / 另存為 PDF
+            </button>
+          </div>
+        </div>
+
+        <div id="printPageWrapper" class="print-page-wrapper" style="width:100%; overflow:auto;">
+          <div id="printOrgRoot">
+            ${html}
+          </div>
+        </div>
+      </body>
+      </html>
+    `);    printWin.document.close();
+    closeModal();
+    } catch(err) {
+      console.error('匯出組織圖錯誤:', err);
+      alert('匯出組織圖時發生錯誤: ' + err.message);
+    }
+  };
+
+
+  /* =========================================================
+   * 11. 異動對照清單
+   * ========================================================= */
+  function renderDiffList() {
+    const c = $('#diffListContainer');
+    const badge = $('#badgeChangesCount');
+    if (!c || !badge) return;
+
+    badge.textContent = `${changes.length} 項`;
+
+    if (changes.length === 0) {
+      c.innerHTML = `
+        <div style="color:#94a3b8; font-size: 13px; text-align:center; padding:30px 10px;">
+          拖曳同仁或點 ✏️ 設定職務<br>異動即刻自動對照
+        </div>
+      `;
+      return;
+    }
+
+    c.innerHTML = changes.map((ch, idx) => `
+      <div class="diff-card">
+        <div class="diff-card-head">
+          <span class="diff-badge">${esc(ch.type)}</span>
+          <button class="diff-undo" onclick="revertSingleChange(${idx})" title="復原此項">✕</button>
+        </div>
+        <div class="diff-name">${esc(ch.name)}</div>
+        <div style="display:flex; align-items:center; gap:4px; flex-wrap:wrap; margin-top:2px;">
+          <span class="diff-val-from">原：${esc(ch.from || '無')}</span>
+          <span class="diff-arrow">➔</span>
+          <span class="diff-val-to">新：${esc(ch.to)}</span>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  window.revertSingleChange = function(index) {
+    const ch = changes[index];
+    if (!ch) return;
+
+    if (ch.personId) {
+      const origP = initialPeople.find(p => p.id === ch.personId);
+      const curP = people.find(p => p.id === ch.personId);
+      if (origP && curP) {
+        if (ch.type === '部門 / 組別調動') {
+          curP.group = origP.group;
+          const initG = locateGroup(origP.group, true);
+          if (initG && initG.group.manager === origP.id) {
+            locateGroup(origP.group).group.manager = origP.id;
+          }
+        }
+        if (ch.type.includes('職稱')) {
+          curP.profTitle = origP.profTitle;
+          curP.mgmtTitle = origP.mgmtTitle;
+          curP.title = origP.profTitle;
+        }
+        if (ch.type === '人員類別異動') curP.category = origP.category;
+      }
+    } else if (ch.groupId) {
+      const initG = locateGroup(ch.groupId, true)?.group;
+      const curG = locateGroup(ch.groupId)?.group;
+      if (initG && curG) {
+        if (ch.orgAction === 'rename_group') curG.name = initG.name;
+        if (ch.orgAction === 'change_group_manager') curG.manager = initG.manager;
+      }
+    }
+
+    changes.splice(index, 1);
+    render();
+    toast('已復原該項異動');
+  };
+
+  /* =========================================================
+   * 12. 確認異動與儲存草稿
+   * ========================================================= */
+  $('#btnFinalReview').onclick = () => openFinalReviewModal();
+  $('#btnSaveDraftQuick').onclick = () => saveDraftQuick();
+
+  function openFinalReviewModal() {
+    if (changes.length === 0) {
+      alert('目前尚無任何異動項目。');
+      return;
+    }
+    const eff = $('#effectiveDate').value || new Date().toISOString().split('T')[0];
+
+    const body = `
+      <div style="font-size:13px; margin-bottom:12px;">
+        預計生效日：<b>${eff}</b>，共 <b>${changes.length}</b> 項異動：
+      </div>
+      <div style="max-height:240px; overflow-y:auto; border:1px solid #cbd5e1; border-radius:6px; padding:8px; margin-bottom:12px; background:#f8fafc;">
+        ${changes.map(c => `
+          <div style="font-size:12px; padding:5px 0; border-bottom:1px solid #e2e8f0; display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+            <b>[${esc(c.type)}]</b> ${esc(c.name)}：
+            <span style="color:#dc2626; background:#fee2e2; padding:1px 4px; border-radius:3px;">${esc(c.from || '無')}</span>
+            <span>➔</span>
+            <span style="color:#059669; background:#d1fae5; padding:1px 4px; border-radius:3px; font-weight:700;">${esc(c.to)}</span>
+          </div>
+        `).join('')}
+      </div>
+      <div class="form-group">
+        <label class="form-label">異動備註說明</label>
+        <textarea id="appComment" class="form-control" rows="2" placeholder="填寫調動原因或背景說明..."></textarea>
+      </div>
+    `;
+
+    const foot = `
+      <button class="btn-action" onclick="closeModal()">返回修改</button>
+      <button class="btn-action primary" onclick="submitChangesFinal()">確認送出異動</button>
+    `;
+
+    openModal('確認組織與人員異動內容', body, foot);
+  }
+
+  function saveDraftQuick() {
+    if (changes.length === 0) {
+      alert('尚無異動項目。');
+      return;
+    }
+    toast('已將目前異動內容暫存為草稿');
+  }
+
+  function submitChangesFinal() {
+    toast('異動內容已成功送出！');
+    closeModal();
+  }
+
+  /* =========================================================
+   * 13. Modal 控制器
+   * ========================================================= */
+  function openModal(title, bodyHtml, footHtml) {
+    const t = $('#modalTitle'); if (t) t.textContent = title;
+    const b = $('#modalBody'); if (b) b.innerHTML = bodyHtml;
+    const f = $('#modalFoot'); if (f) f.innerHTML = footHtml || '<button class="btn-action" onclick="closeModal()">關閉</button>';
+    const o = $('#modalOverlay'); if (o) o.classList.add('open');
+  }
+  function closeModal() {
+    const o = $('#modalOverlay'); if (o) o.classList.remove('open');
+  }
+  window.closeModal = closeModal;
+  $('#modalOverlay').onclick = e => { if (e.target.id === 'modalOverlay') closeModal(); };
+
+  const d = new Date();
+  d.setMonth(d.getMonth() + 1);
+  d.setDate(1);
+  $('#effectiveDate').value = d.toISOString().split('T')[0];
+
+  initFocusDeptOptions();
+  render();
+  </script>
+</body>
+</html>
