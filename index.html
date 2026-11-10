@@ -1518,13 +1518,13 @@
     if (!sel) return;
 
     if (sel.options.length === 0) {
-      let html = `<option value="HR">👑 HR管理者</option>`;
+      let html = `<option value="HR">HR管理者</option>`;
       org.forEach(div => {
         div.depts.forEach(dep => {
           const lead = getDeptLeadership(dep.id);
           const ministerName = lead && lead.minister ? lead.minister.name : '';
           const label = `${div.shortName || div.name} · ${dep.name}長 ${ministerName ? '(' + ministerName + ')' : ''}`;
-          html += `<option value="${esc(dep.id)}">👔 ${esc(label)}</option>`;
+          html += `<option value="${esc(dep.id)}">${esc(label)}</option>`;
         });
       });
       sel.innerHTML = html;
