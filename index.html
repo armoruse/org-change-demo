@@ -3673,6 +3673,7 @@ window.revertAllToInitial = function() {
           curP.title = origP.profTitle;
         }
         if (ch.type === '人員類別異動') curP.category = origP.category;
+        if (ch.type === '同仁改名') curP.name = origP.name;
       }
     } else if (ch.groupId) {
       const initG = locateGroup(ch.groupId, true)?.group;
@@ -3681,6 +3682,13 @@ window.revertAllToInitial = function() {
         if (ch.orgAction === 'rename_group') curG.name = initG.name;
         if (ch.orgAction === 'change_group_manager') curG.manager = initG.manager;
       }
+    } else if (ch.deptId) {
+      const initD = locateDept(ch.deptId, true)?.department;
+      const curD = locateDept(ch.deptId)?.department;
+      if (initD && curD) {
+        if (ch.orgAction === 'rename_dept') curD.name = initD.name;
+      }
+      initFocusDeptOptions();
     }
 
     changes.splice(index, 1);
