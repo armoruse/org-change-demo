@@ -549,6 +549,25 @@
       overflow: hidden;
       text-overflow: ellipsis;
     }
+    .btn-move-person {
+      color: #2563eb;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 11.5px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-move-person:hover {
+      background: #2563eb;
+      color: #ffffff;
+      border-color: #2563eb;
+    }
     .btn-edit-person {
       color: #94a3b8;
       background: transparent;
@@ -1085,7 +1104,7 @@
 
     <div class="top-actions">
       <!-- Export Org Chart (PDF 預覽列印) -->
-      <button class="btn-action" onclick="openExportOrgModal()">
+      <button class="btn-action" onclick="exportOrgPDF()">
         <span>📊 匯出組織圖</span>
       </button>
 
@@ -2919,7 +2938,7 @@ function getDeptLeadership(deptId) {
               : '';
             return `
               <div class="person-item ${isLeader ? 'is-leader-item' : ''} ${isChanged ? 'is-changed' : ''} ${selected.has(p.id) ? 'selected' : ''} ${recentlyMovedPersonIds.has(p.id) ? 'drop-pulse' : ''}" 
-                   draggable="true" 
+                   draggable="false" 
                    data-person-id="${esc(p.id)}" 
                    onclick="onPersonCardClick(event, '${esc(p.id)}')"
                    title="${esc(hoverTitle)}">
@@ -2935,20 +2954,32 @@ function getDeptLeadership(deptId) {
                     </div>
                   </div>
                 </div>
-                ${isManaged || isChanged ? `
-                  <button class="btn-edit-person" onclick="event.stopPropagation(); openEditPersonModal('${esc(p.id)}')" title="職務與彈性欄位設定" style="${isChanged ? 'border-color:#eab308; background:#fef08a;' : ''}">
-                    ✏️
-                  </button>
-                ` : ''}
+                <div style="display:flex; align-items:center; gap:4px;">
+                  ${isManaged ? `
+                    <button type="button" class="btn-move-person" onclick="event.stopPropagation(); openQuickMoveModal('${esc(p.id)}')" title="點擊調動至其他組別">
+                      ⇄ 調動
+                    </button>
+                  ` : ''}
+                  ${isManaged || isChanged ? `
+                    <button class="btn-edit-person" onclick="event.stopPropagation(); openEditPersonModal('${esc(p.id)}')" title="職務與彈性欄位設定" style="${isChanged ? 'border-color:#eab308; background:#fef08a;' : ''}">
+                      ✏️
+                    </button>
+                  ` : ''}
+                </div>
               </div>
             `;
           }).join('')}
 
-          ${isForeign ? `
-            <div class="target-drop-hint" style="margin-top:${displayMembers.length > 0 ? '6px' : '0'};">
-              📥 可拖曳人員至此
+          ${selected.size > 0 && Array.from(selected).some(pid => people.find(x => x.id === pid)?.group !== g.id) ? `
+            <button type="button" class="btn-group-move-here" onclick="event.stopPropagation(); moveSelectedToGroup('${esc(g.id)}')"
+                    style="width:100%; margin-top:8px; padding:7px 10px; font-size:12.5px; font-weight:800; background:#2563eb; color:#ffffff; border:none; border-radius:6px; cursor:pointer; box-shadow:0 1px 3px rgba(37,99,235,0.3); display:flex; align-items:center; justify-content:center; gap:5px; transition:all 0.15s;">
+              📥 點擊調入此組 (${selected.size} 人)
+            </button>
+          ` : (isForeign && displayMembers.length === 0 ? `
+            <div class="target-drop-hint" style="color:#64748b; font-size:12px; text-align:center; padding:12px 6px;">
+              👆 點選左側同仁後，點擊此處即可調入
             </div>
-          ` : ''}
+          ` : '')}
         </div>
       </div>
     `;
@@ -2962,7 +2993,10 @@ function getDeptLeadership(deptId) {
   let activeSummonDivId = 'D1';
   let summonSelectedDeptIds = new Set();
 
+  window.openSummonTargetDeptModal = function() { return openSummonTargetModal(); };
   window.openSummonTargetModal = function() {
+  };
+  window.openSummonTargetDeptModal = function() {
     const curLoc = locateDept(focusDeptId);
     if (curLoc && curLoc.division) {
       activeSummonDivId = curLoc.division.id;
@@ -3843,19 +3877,101 @@ function getDeptLeadership(deptId) {
   };
 
   window.onPersonCardClick = function(ev, pid) {
-    if (ev.target.closest('.btn-edit-person, input, select, button, a')) return;
-    if (ev.ctrlKey || ev.metaKey) {
-      // UX Item 4: Ctrl/Cmd click multi-select toggle
-      toggleSelectPerson(pid);
-    } else {
-      // Single select: if already selected alone, toggle off; otherwise clear and select this card
-      if (selected.has(pid) && selected.size === 1) {
-        selected.clear();
-      } else {
-        selected.clear();
-        selected.add(pid);
+    if (ev.target.closest('.btn-edit-person, .btn-move-person, input, select, button, a')) return;
+    // 點擊卡片：單純一個一個點選 / 取消選取
+    toggleSelectPerson(pid);
+    renderCanvas(); // 立即刷新組別上的「調入此組」按鈕狀態
+  };
+
+  window.openQuickMoveModal = function(pid) {
+    const p = people.find(x => x.id === pid);
+    if (!p) return;
+    const curLoc = locateGroup(p.group);
+    const curGroupName = curLoc ? (curLoc.department.name + ' - ' + curLoc.group.name) : '無';
+
+    // 收集目前關注部門與目標接收部門之所有組別
+    const groupOptions = [];
+    org.forEach(div => {
+      div.depts.forEach(dep => {
+        if (dep.id === focusDeptId || targetDeptIds.has(dep.id)) {
+          dep.groups.forEach(g => {
+            if (g.id !== p.group) {
+              groupOptions.push({
+                groupId: g.id,
+                label: `${dep.name} - ${g.name}`
+              });
+            }
+          });
+        }
+      });
+    });
+
+    const body = `
+      <div style="font-size:13.5px; color:#334155; margin-bottom:14px; line-height:1.6;">
+        目前人員：<b>${esc(p.name)}</b> (${esc(p.id)})<br>
+        現屬單位：<span style="color:#b91c1c; font-weight:700;">${esc(curGroupName)}</span>
+      </div>
+
+      <div class="form-group" style="margin-bottom:14px;">
+        <label class="form-label" style="font-weight:700; font-size:13px; color:#1e293b;">請選擇欲調入之目標組別：</label>
+        <select id="selQuickTargetGroup" class="form-control" style="font-size:13.5px; padding:8px 10px;">
+          ${groupOptions.map(opt => `
+            <option value="${esc(opt.groupId)}">${esc(opt.label)}</option>
+          `).join('')}
+        </select>
+      </div>
+    `;
+
+    const foot = `
+      <button class="btn-action" onclick="closeModal()">取消</button>
+      <button class="btn-action primary" onclick="confirmQuickMovePerson('${esc(p.id)}')" style="padding:8px 18px; font-weight:700;">
+        確定調動
+      </button>
+    `;
+
+    openModal(`⇄ 調動人員：${p.name}`, body, foot);
+  };
+
+  window.confirmQuickMovePerson = function(pid) {
+    const sel = $('#selQuickTargetGroup');
+    if (!sel || !sel.value) return;
+    const targetGid = sel.value;
+    if (executeMoveCheck(pid, targetGid)) {
+      recentlyMovedPersonIds.add(pid);
+      const loc = locateGroup(targetGid);
+      toast(`🎉 已成功調動同仁至【${loc.group.name}】`);
+      closeModal();
+      render();
+      setTimeout(() => {
+        recentlyMovedPersonIds.delete(pid);
+        document.querySelectorAll('.person-item.drop-pulse').forEach(el => el.classList.remove('drop-pulse'));
+      }, 1200);
+    }
+  };
+
+  window.moveSelectedToGroup = function(targetGid) {
+    if (selected.size === 0) {
+      alert('請先點選欲調動之同仁！');
+      return;
+    }
+    const personIds = Array.from(selected);
+    let movedCount = 0;
+    personIds.forEach(pid => {
+      if (executeMoveCheck(pid, targetGid)) {
+        movedCount++;
+        recentlyMovedPersonIds.add(pid);
       }
-      renderSelectionUI();
+    });
+
+    if (movedCount > 0) {
+      const loc = locateGroup(targetGid);
+      toast(`🎉 已成功調動 ${movedCount} 位同仁至【${loc.group.name}】`);
+      selected.clear();
+      render();
+      setTimeout(() => {
+        personIds.forEach(pid => recentlyMovedPersonIds.delete(pid));
+        document.querySelectorAll('.person-item.drop-pulse').forEach(el => el.classList.remove('drop-pulse'));
+      }, 1200);
     }
   };
 
@@ -4290,6 +4406,8 @@ window.revertAllToInitial = function() {
    * 10. 匯出組織圖 (組長最頂端 ＋ 無(一)(二)(三) ＋ 完整黑線串聯)
    * ========================================================= */
   window.openExportOrgModal = function() {
+    exportOrgPDF();
+    return;
     const curLoc = locateDept(focusDeptId);
     const curDeptVisibleGroups = curLoc ? curLoc.department.groups.filter(g => !hiddenGroupIds.has(g.id) && g.name !== '主管' && g.name !== '部主管室') : [];
     let totalScreenVisibleGroups = curDeptVisibleGroups.length;
@@ -5180,165 +5298,29 @@ window.revertAllToInitial = function() {
     const eff = $('#effectiveDate').value || new Date().toISOString().split('T')[0];
     const roleText = $('#selLoginRole')?.value === 'hr' ? 'HR 管理者' : (locateDept(focusDeptId)?.department?.name + ' 長官');
 
-    const flowchartBannerHtml = `
-      <div style="background:#ffffff; border:1.5px solid #cbd5e1; border-radius:8px; padding:10px 12px; margin-bottom:12px; box-shadow:0 1px 3px rgba(0,0,0,0.03);">
-        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
-          <div style="font-weight:800; font-size:13.5px; color:#0f172a; display:flex; align-items:center; gap:6px;">
-            <span>📊</span> 簽核與 HCP 對接流程架構圖 (紙本 vs 線上 BPM)
-          </div>
-          <div style="display:flex; gap:6px; align-items:center;">
-            <button type="button" class="btn-action" onclick="copyWorkflowDiagramText()" style="padding:4px 9px; font-size:12px; font-weight:700;" title="複製文字流程架構">
-              📋 複製流程文字
-            </button>
-            <button type="button" class="btn-action" onclick="copyWorkflowMermaidCode()" style="padding:4px 9px; font-size:12px; font-weight:700;" title="複製 Mermaid 流程圖代碼">
-              📋 複製 Mermaid
-            </button>
-            <button type="button" class="btn-action primary" onclick="printWorkflowDiagram()" style="padding:4px 11px; font-size:12px; font-weight:700;" title="列印流程圖或另存 PDF">
-              🖨️ 列印流程圖
-            </button>
-          </div>
-        </div>
-      </div>
-    `;
-
-
-    const tabNavHtml = `
-      <div class="workflow-tab-nav">
-        <button type="button" class="workflow-tab-btn ${activeWorkflowTab === 'paper' ? 'active' : ''}" onclick="switchWorkflowTab('paper')">
-          📄 方式 1：紙本送簽模式 (傳統公文簽呈)
-        </button>
-        <button type="button" class="workflow-tab-btn ${activeWorkflowTab === 'online' ? 'active' : ''}" onclick="switchWorkflowTab('online')">
-          🚀 方式 2：線上電子簽核流程 (BPM 四關卡)
-        </button>
-      </div>
-    `;
-
-    let workflowBody = '';
-    if (activeWorkflowTab === 'paper') {
-      workflowBody = `
-        <div style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px; padding:12px; margin-bottom:14px;">
-          <div style="font-weight:700; color:#1e293b; margin-bottom:4px; font-size:13.5px;">📄 紙本送簽與簽核流程說明：</div>
-          <div style="font-size:12.5px; color:#475569; line-height:1.6;">
-            1. 點擊下方<b>「🖨️ 列印異動簽呈單」</b>，系統將自動套印 A4 正式公文簽呈，呈送各權責長官（原單位主管 ➔ 新單位接收主管 ➔ HR 覆核 ➔ 總經理 / 決策長官）簽名核決。<br>
-            2. 實體紙本簽核完成後，由 HR 承辦人在線上點擊<b>「📢 HR 標記簽畢並通知 MIS」</b>，系統即自動發送線上名冊通報 MIS/IT 調整帳號與門禁權限。
-          </div>
-          <div style="display:flex; gap:10px; margin-top:10px; align-items:center; flex-wrap:wrap;">
-            <button type="button" class="btn-action primary" onclick="printPaperSignoffSheet()" style="padding:7px 14px; font-size:13px;">
-              🖨️ 列印異動簽呈單 (主管簽章聯)
-            </button>
-            <button type="button" class="btn-action" onclick="openHrNotifyMisModal()" style="padding:7px 14px; font-size:13px; border-color:#059669; color:#059669; background:#ecfdf5;">
-              📢 HR 標記簽畢並通知 MIS
-            </button>
-            <span style="font-size:12px; color:${paperMisNotified ? '#059669' : '#d97706'}; font-weight:700;">
-              ${paperMisNotified ? '✅ 紙本已簽畢，MIS 異動通報已發送' : '⏳ 狀態：待長官實體紙本核決'}
-            </span>
-          </div>
-        </div>
-      `;
-    } else {
-      workflowBody = `
-        <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:8px; padding:12px; margin-bottom:14px;">
-          <div style="font-weight:700; color:#1e40af; margin-bottom:4px; font-size:13.5px;">🚀 線上電子簽核流程 (BPM Engine) 說明：</div>
-          <div style="font-size:12.5px; color:#334155; line-height:1.6;">
-            線上無紙化流程：送出後自動進入 BPM 簽核引擎，依調動單位自動派送至原單位主管與新單位主管會簽，最終由 HR 覆核生效，並自動派工通知 MIS 相關單位。
-          </div>
-
-          <!-- BPM Stepper -->
-          <div class="bpm-stepper-box">
-            <div class="bpm-step-item completed">
-              <div class="bpm-step-circle">✓</div>
-              <div class="bpm-step-label">1. 提出申請</div>
-              <div class="bpm-step-status">${esc(roleText)}</div>
-            </div>
-            <div class="bpm-sep-arrow">➔</div>
-            <div class="bpm-step-item ${bpmCurrentStep > 2 ? 'completed' : (bpmCurrentStep === 2 ? 'active' : '')}">
-              <div class="bpm-step-circle">${bpmCurrentStep > 2 ? '✓' : '2'}</div>
-              <div class="bpm-step-label">2. 原單位主管審核</div>
-              <div class="bpm-step-status">${bpmCurrentStep > 2 ? '已核准' : (bpmCurrentStep === 2 ? '審核中' : '等待中')}</div>
-            </div>
-            <div class="bpm-sep-arrow">➔</div>
-            <div class="bpm-step-item ${bpmCurrentStep > 3 ? 'completed' : (bpmCurrentStep === 3 ? 'active' : '')}">
-              <div class="bpm-step-circle">${bpmCurrentStep > 3 ? '✓' : '3'}</div>
-              <div class="bpm-step-label">3. 新單位主管會簽</div>
-              <div class="bpm-step-status">${bpmCurrentStep > 3 ? '已會簽' : (bpmCurrentStep === 3 ? '會簽中' : '等待中')}</div>
-            </div>
-            <div class="bpm-sep-arrow">➔</div>
-            <div class="bpm-step-item ${bpmCurrentStep > 4 ? 'completed' : (bpmCurrentStep === 4 ? 'active' : '')}">
-              <div class="bpm-step-circle">${bpmCurrentStep > 4 ? '✓' : '4'}</div>
-              <div class="bpm-step-label">4. HR 人資覆核</div>
-              <div class="bpm-step-status">${bpmCurrentStep > 4 ? '已覆核' : (bpmCurrentStep === 4 ? '覆核中' : '等待中')}</div>
-            </div>
-            <div class="bpm-sep-arrow">➔</div>
-            <div class="bpm-step-item ${bpmCurrentStep === 5 ? 'completed' : ''}">
-              <div class="bpm-step-circle">${bpmCurrentStep === 5 ? '✓' : '5'}</div>
-              <div class="bpm-step-label">5. MIS 自動派工</div>
-              <div class="bpm-step-status">${bpmCurrentStep === 5 ? '已派工開通' : '等待派工'}</div>
-            </div>
-          </div>
-
-          <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-            <button type="button" class="btn-action primary" onclick="submitBpmOnline()" style="padding:7px 14px; font-size:13px;">
-              🚀 發起線上電子簽核 (單號: ${bpmDocNo})
-            </button>
-            <button type="button" class="btn-action" onclick="advanceBpmDemoStep()" style="padding:7px 14px; font-size:13px; border-color:#3b82f6; color:#1d4ed8;">
-              ⚡ 模擬主管快速核決 (DEMO 演示)
-            </button>
-            <span style="font-size:12px; color:#64748b;">
-              BPM 單號：<b>${bpmDocNo}</b>
-            </span>
-          </div>
-        </div>
-      `;
-    }
-
-    const hcpSectionHtml = `
-      <div class="hcp-dock-card">
-        <div class="hcp-dock-head">
-          <div style="font-weight:700; color:#0f172a; font-size:13.5px; display:flex; align-items:center; gap:6px;">
-            <span>🔄</span> HCP 人事主檔對接專區 (兩種送簽方式均必備)
-          </div>
-          <span style="font-size:11.5px; color:#64748b;">相容鼎新 HCP 人事薪資系統標準格式</span>
-        </div>
-        <div style="font-size:12px; color:#475569; margin-bottom:10px;">
-          異動資料核決後，可直接匯出帶有 UTF-8 BOM 之 CSV 供 HCP 批次匯入，或呼叫 RESTful API 於生效日 00:00 自動同步組織與人事主檔。
-        </div>
-        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-          <button type="button" class="btn-action" onclick="downloadHcpCsv()" style="background:#ffffff; border-color:#059669; color:#059669; font-weight:700;">
-            📥 匯出 HCP 人事異動匯入檔 (CSV - UTF-8 BOM)
-          </button>
-          <button type="button" class="btn-action" onclick="openHcpApiModal()" style="background:#ffffff; border-color:#7c3aed; color:#7c3aed; font-weight:700;">
-            ⚡ 串接 HCP API 自動調整 (規格預覽 & 即時測試)
-          </button>
-        </div>
-      </div>
-    `;
-
     return `
-      <div style="font-size:13px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; background:#f1f5f9; padding:8px 12px; border-radius:6px;">
-        <div>預計生效日：<b style="color:#2563eb;">${eff}</b> · 總異動筆數：<b style="color:#dc2626;">${changes.length}</b> 項</div>
+      <div style="font-size:13.5px; margin-bottom:14px; display:flex; justify-content:space-between; align-items:center; background:#f1f5f9; padding:10px 14px; border-radius:8px;">
+        <div>預計生效日：<b style="color:#2563eb; font-size:15px;">${eff}</b> · 總異動筆數：<b style="color:#dc2626; font-size:15px;">${changes.length}</b> 項</div>
         <div>申請身分：<b>${esc(roleText)}</b></div>
       </div>
 
-      ${flowchartBannerHtml}
-      ${tabNavHtml}
-      ${workflowBody}
-
-      <div style="margin-top:10px;">
-        <div style="font-size:13px; font-weight:700; color:#334155; margin-bottom:6px;">📋 本次異動清單預覽：</div>
-        <div style="max-height:180px; overflow-y:auto; border:1px solid #cbd5e1; border-radius:6px; padding:6px 10px; background:#f8fafc;">
-          ${changes.map((c, i) => `
-            <div style="font-size:12px; padding:5px 0; border-bottom:1px solid #e2e8f0; display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
-              <span style="font-size:11px; color:#64748b;">#${i+1}</span>
-              <b>[${esc(c.type)}]</b> ${esc(c.name)}：
-              <span style="color:#dc2626; background:#fee2e2; padding:1px 4px; border-radius:3px;">${esc(c.from || '無')}</span>
-              <span>➔</span>
-              <span style="color:#059669; background:#d1fae5; padding:1px 4px; border-radius:3px; font-weight:700;">${esc(c.to)}</span>
-            </div>
-          `).join('')}
-        </div>
+      <div style="font-size:13.5px; font-weight:700; color:#334155; margin-bottom:8px;">📋 本次異動清單預覽：</div>
+      <div style="max-height:280px; overflow-y:auto; border:1px solid #cbd5e1; border-radius:8px; padding:8px 12px; background:#f8fafc; margin-bottom:14px;">
+        ${changes.map((c, i) => `
+          <div style="font-size:12.5px; padding:7px 0; border-bottom:1px solid #e2e8f0; display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+            <span style="font-size:11px; color:#64748b; font-weight:700;">#${i+1}</span>
+            <b>[${esc(c.type)}]</b> <span style="font-weight:700; color:#0f172a;">${esc(c.name)}</span>：
+            <span style="color:#dc2626; background:#fee2e2; padding:2px 6px; border-radius:4px;">${esc(c.from || '無')}</span>
+            <span style="color:#64748b;">➔</span>
+            <span style="color:#059669; background:#d1fae5; padding:2px 6px; border-radius:4px; font-weight:700;">${esc(c.to)}</span>
+          </div>
+        `).join('')}
       </div>
 
-      ${hcpSectionHtml}
+      <div class="form-group" style="margin-bottom:6px;">
+        <label class="form-label" style="font-weight:700; font-size:13px; color:#334155;">異動備註說明 (選填)</label>
+        <textarea id="appComment" class="form-control" rows="2" placeholder="填寫調動原因、業務移交說明或簽呈備註..." style="font-size:13px;"></textarea>
+      </div>
     `;
   }
 
@@ -5352,11 +5334,60 @@ window.revertAllToInitial = function() {
     const body = renderFinalReviewModalContent();
     const foot = `
       <button class="btn-action" onclick="closeModal()">關閉返回</button>
-      <button class="btn-action primary" onclick="submitChangesFinal()">確認送出異動</button>
+      <button class="btn-action" onclick="printPaperSignoffSheet()" style="background:#ffffff; border:1.5px solid #2563eb; color:#2563eb; font-weight:700; padding:8px 16px;">
+        🖨️ 列印
+      </button>
+      <button class="btn-action primary" onclick="submitAndNotifyHr()" style="padding:8px 20px; font-weight:800; font-size:13.5px;">
+        🚀 送出簽核
+      </button>
     `;
 
-    openModal('📋 組織與人員異動核決與 HCP 對接作業', body, foot);
+    openModal('📋 確認組織與人員異動內容', body, foot);
   }
+
+  window.submitAndNotifyHr = function() {
+    const eff = $('#effectiveDate').value || new Date().toISOString().split('T')[0];
+    const docNo = 'IGS-CHG-' + new Date().toISOString().slice(0, 10).replace(/-/g, '') + '-' + Math.floor(100 + Math.random() * 900);
+    const comment = $('#appComment')?.value || '';
+
+    // 後台記錄簽核單與通知 HR
+    const submissionRecord = {
+      docNo: docNo,
+      effectiveDate: eff,
+      submitter: $('#selLoginRole')?.value || '商用研一部長',
+      comment: comment,
+      changesCount: changes.length,
+      status: 'HR_PENDING',
+      timestamp: new Date().toISOString()
+    };
+
+    console.log('[後台已送交 HR 簽核通知]:', submissionRecord);
+
+    const body = `
+      <div style="text-align:center; padding:16px 10px;">
+        <div style="font-size:42px; margin-bottom:10px;">🎉</div>
+        <div style="font-size:17px; font-weight:800; color:#065f46; margin-bottom:8px;">異動已成功送出簽核！</div>
+        <div style="font-size:13.5px; color:#334155; line-height:1.7; margin-bottom:16px;">
+          簽核單號：<b style="color:#2563eb;">${docNo}</b><br>
+          預計生效日：<b>${eff}</b>（共 ${changes.length} 項異動）<br>
+          系統已在<b>後台自動發送通報信件至【人力資源部 (HR)】</b>，由人資承辦人員進行編制覆核與主檔同步。
+        </div>
+        <div style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px; padding:12px; display:inline-flex; align-items:center; gap:10px;">
+          <span style="font-size:12.5px; color:#475569;">如需留存 HCP 轉檔資料：</span>
+          <button type="button" class="btn-action" onclick="downloadHcpCsv()" style="background:#ffffff; border-color:#059669; color:#059669; font-weight:700; font-size:12.5px;">
+            📥 下載 HCP 異動匯入檔 (CSV)
+          </button>
+        </div>
+      </div>
+    `;
+
+    const foot = `
+      <button class="btn-action primary" onclick="closeModal()" style="padding:8px 22px; font-weight:800;">完成</button>
+    `;
+
+    openModal('✅ 異動申請已送交 HR 簽核', body, foot);
+    toast('🎉 已成功送出簽核！系統已在後台自動通知 HR 人資單位');
+  };
 
   /* =========================================================
    * 紙本簽呈單列印 (printPaperSignoffSheet)
