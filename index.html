@@ -4942,9 +4942,258 @@ window.revertAllToInitial = function() {
     toast('💾 已將目前異動內容暫存為草稿');
   }
 
+  
+  const workflowDiagramText = `【鈊象電子 - 組織架構暨人員異動 簽核與系統對接流程架構圖】
+
+[起點：組織異動工作台 (提出調動與設定)]
+       |
+       +---------------------------------------------+
+       |                                             |
+[方式 1：紙本送簽模式 (傳統公文簽呈)]         [方式 2：線上電子簽核 (BPM 四關卡流程)]
+       |                                             |
+ 1. 🖨️ 列印 A4 異動簽呈單                     1. 🚀 發起線上電子簽核 (生成 BPM 追蹤單號)
+       |                                             |
+ 2. ✍️ 實體紙本送陳主管簽章核決                 2. ✍️ 原單位主管線上審核
+    • 原單位主管 ➔ 新單位主管                       |
+    • HR 覆核 ➔ 總經理 / 決策長官              3. 🤝 新單位主管線上會簽
+       |                                             |
+ 3. 📢 HR 於線上標記紙本簽畢並輸入文號          4. 📑 HR 人資單位覆核生效
+       |                                             |
+ 4. 💻 系統自動發送名冊通知 MIS 相關單位         5. 💻 MIS 系統自動派工開通帳號與門禁權限
+    • AD 帳號部門群組更新                         • AD / 門禁卡 / Email / 專案檔案權限
+    • 門禁卡權限與樓層開通                           |
+    • 內部公務 Email 群組與檔案目錄                 |
+       |                                             |
+       +---------------------------------------------+
+                               |
+            [共通底層：HCP 人事主檔系統對接]
+            • 📥 匯出 HCP 異動資料匯入檔 (CSV - UTF-8 with BOM)
+            • ⚡ 串接 HCP RESTful API (生效日 00:00 自動無縫同步主檔)`;
+
+  const workflowMermaidCode = `flowchart TD
+    A["組織異動工作台 (提出調動與設定)"] --> B{"選擇簽核流程模式"}
+    
+    subgraph 方式一: 紙本送簽模式 (傳統公文簽呈)
+        B -->|方式 1| C["🖨️ 列印 A4 異動簽呈單"]
+        C --> D["紙本送陳實體簽名核決<br>(原主管 ➔ 新主管 ➔ HR ➔ 總經理)"]
+        D --> E["📢 HR 線上標記簽畢並輸入文號"]
+        E --> F["系統自動發送名冊通知 MIS 開通權限<br>(AD帳號、門禁卡、Email、檔案目錄)"]
+    end
+    
+    subgraph 方式二: 線上電子簽核 (BPM 流程)
+        B -->|方式 2| G["🚀 發起線上電子簽核 (生成 BPM 單號)"]
+        G --> H["原單位主管線上審核"]
+        H --> I["新單位主管線上會簽"]
+        I --> J["HR 人資單位覆核生效"]
+        J --> K["MIS 系統自動派工開通帳號與門禁"]
+    end
+
+    subgraph 共通 HCP 系統對接 (兩種方式皆支援)
+        F & K --> L["📥 匯出 HCP 異動資料匯入檔 (CSV - UTF-8 with BOM)"]
+        F & K --> M["⚡ 串接 HCP RESTful API (排程生效日 00:00 自動同步主檔)"]
+    end`;
+
+
+  window.copyWorkflowDiagramText = function() {
+    navigator.clipboard.writeText(workflowDiagramText.trim()).then(() => {
+      toast('📋 已成功複製【流程架構圖 (文字版)】！');
+    }).catch(() => {
+      toast('📋 請手動選取複製');
+    });
+  };
+
+  window.copyWorkflowMermaidCode = function() {
+    navigator.clipboard.writeText(workflowMermaidCode.trim()).then(() => {
+      toast('📋 已成功複製【Mermaid 流程圖語法】！');
+    }).catch(() => {
+      toast('📋 請手動選取複製');
+    });
+  };
+
+  window.printWorkflowDiagram = function() {
+    const printWin = window.open('', '_blank', 'width=1000,height=850');
+    if (!printWin) {
+      alert('請允許瀏覽器彈出視窗以列印流程圖。');
+      return;
+    }
+    const htmlContent = `
+      <!doctype html>
+      <html lang="zh-Hant">
+      <head>
+        <meta charset="utf-8">
+        <title>組織架構暨人員異動 簽核與系統對接流程架構圖</title>
+        <style>
+          body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Microsoft JhengHei", sans-serif; padding: 28px; color: #0f172a; line-height: 1.5; background: #ffffff; }
+          .no-print { margin-bottom: 20px; display: flex; justify-content: flex-end; gap: 10px; }
+          @media print { .no-print { display: none !important; } body { padding: 0 !important; } }
+          .header-box { text-align: center; border-bottom: 2px solid #0f172a; padding-bottom: 12px; margin-bottom: 20px; }
+          .main-title { font-size: 24px; font-weight: 800; letter-spacing: 1.5px; margin: 0 0 6px 0; }
+          .sub-title { font-size: 14px; color: #475569; margin: 0; }
+          .flow-container { display: flex; flex-direction: column; gap: 16px; margin-top: 10px; }
+          .start-card { background: #eff6ff; border: 2px solid #3b82f6; border-radius: 8px; padding: 12px; text-align: center; font-weight: 800; font-size: 15px; color: #1e40af; }
+          .branch-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+          .branch-card { border: 2px solid #cbd5e1; border-radius: 10px; padding: 16px; background: #f8fafc; }
+          .branch-title { font-size: 16px; font-weight: 800; margin-bottom: 12px; padding-bottom: 6px; border-bottom: 2px solid #cbd5e1; display: flex; align-items: center; gap: 6px; }
+          .step-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; font-size: 13px; }
+          .step-item { background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 6px; padding: 10px 12px; display: flex; align-items: flex-start; gap: 8px; }
+          .step-badge { width: 22px; height: 22px; border-radius: 50%; background: #2563eb; color: #ffffff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 11px; flex-shrink: 0; }
+          .step-text { font-size: 13px; color: #1e293b; line-height: 1.4; }
+          .step-sub { font-size: 11.5px; color: #64748b; margin-top: 2px; }
+          .hcp-bottom-card { background: #faf5ff; border: 2px solid #a855f7; border-radius: 10px; padding: 16px; margin-top: 4px; }
+          .hcp-bottom-title { font-size: 15px; font-weight: 800; color: #6b21a8; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+        </style>
+      </head>
+      <body>
+        <div class="no-print">
+          <button onclick="window.print()" style="padding:9px 20px; font-size:14px; font-weight:700; background:#2563eb; color:white; border:none; border-radius:6px; cursor:pointer;">🖨️ 立即列印此流程圖</button>
+          <button onclick="window.close()" style="padding:9px 16px; font-size:14px; background:#e2e8f0; border:none; border-radius:6px; cursor:pointer;">✕ 關閉視窗</button>
+        </div>
+
+        <div class="header-box">
+          <h1 class="main-title">鈊象電子股份有限公司</h1>
+          <p class="sub-title">【系統規格架構】組織架構暨人員異動 簽核與系統對接流程總覽</p>
+        </div>
+
+        <div class="flow-container">
+          <div class="start-card">
+            🎯 組織異動工作台：完成組織調動、職務設定、組長任命與異動對照
+          </div>
+
+          <div class="branch-grid">
+            <!-- 方式 1 -->
+            <div class="branch-card" style="border-color:#93c5fd; background:#f8faff;">
+              <div class="branch-title" style="color:#1d4ed8; border-color:#bfdbfe;">
+                <span>📄</span> 方式 1：紙本送簽模式 (傳統公文簽呈)
+              </div>
+              <ul class="step-list">
+                <li class="step-item">
+                  <div class="step-badge">1</div>
+                  <div class="step-text">
+                    <b>🖨️ 產生並列印 A4 異動簽呈單</b>
+                    <div class="step-sub">系統自動組裝異動清冊總表與四大主管簽章欄位。</div>
+                  </div>
+                </li>
+                <li class="step-item">
+                  <div class="step-badge">2</div>
+                  <div class="step-text">
+                    <b>✍️ 實體紙本循序呈陳主管親簽核決</b>
+                    <div class="step-sub">【原單位主管】➔ 【新單位接收主管】➔ 【人資處 HR】➔ 【總經理/決策長官】。</div>
+                  </div>
+                </li>
+                <li class="step-item">
+                  <div class="step-badge">3</div>
+                  <div class="step-text">
+                    <b>📢 HR 於線上標記紙本簽畢並輸入文號</b>
+                    <div class="step-sub">登錄核決公文文號，確認異動生效。</div>
+                  </div>
+                </li>
+                <li class="step-item">
+                  <div class="step-badge">4</div>
+                  <div class="step-text">
+                    <b>💻 系統自動發送名冊通知 MIS/IT 相關單位</b>
+                    <div class="step-sub">通報 AD 帳號群組、門禁卡樓層、Email 群組與專案目錄權限切換。</div>
+                  </div>
+                </li>
+              </ul>
+            </div>
+
+            <!-- 方式 2 -->
+            <div class="branch-card" style="border-color:#86efac; background:#f0fdf4;">
+              <div class="branch-title" style="color:#15803d; border-color:#bbf7d0;">
+                <span>🚀</span> 方式 2：線上電子簽核流程 (BPM 四關卡)
+              </div>
+              <ul class="step-list">
+                <li class="step-item">
+                  <div class="step-badge" style="background:#16a34a;">1</div>
+                  <div class="step-text">
+                    <b>🚀 發起線上電子簽核 (生成 BPM 單號)</b>
+                    <div class="step-sub">申請單位長官確認送出，生成如 BPM-202611-XXXX 追蹤單號。</div>
+                  </div>
+                </li>
+                <li class="step-item">
+                  <div class="step-badge" style="background:#16a34a;">2</div>
+                  <div class="step-text">
+                    <b>✍️ 原單位主管線上審核</b>
+                    <div class="step-sub">由調出部門部長確認業務移交無誤。</div>
+                  </div>
+                </li>
+                <li class="step-item">
+                  <div class="step-badge" style="background:#16a34a;">3</div>
+                  <div class="step-text">
+                    <b>🤝 新單位接收主管線上會簽</b>
+                    <div class="step-sub">接收部門長官線上覆核接收編組。</div>
+                  </div>
+                </li>
+                <li class="step-item">
+                  <div class="step-badge" style="background:#16a34a;">4</div>
+                  <div class="step-text">
+                    <b>📑 HR 人資單位覆核生效</b>
+                    <div class="step-sub">人資主管覆核編制、職等職級並排程生效日期。</div>
+                  </div>
+                </li>
+                <li class="step-item">
+                  <div class="step-badge" style="background:#16a34a;">5</div>
+                  <div class="step-text">
+                    <b>💻 MIS 系統自動派工開通權限</b>
+                    <div class="step-sub">全自動派工開通 AD 帳號、門禁卡與內部系統存取權。</div>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- HCP 對接底層 -->
+          <div class="hcp-bottom-card">
+            <div class="hcp-bottom-title">
+              <span>🔄</span> 共通底層：HCP 人事主檔系統對接 (兩種送簽方式均必備)
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; font-size:12.5px; color:#334155; margin-top:8px;">
+              <div style="background:#ffffff; border:1px solid #d8b4fe; border-radius:6px; padding:10px 12px;">
+                <b style="color:#7e22ce;">📥 途徑 A：匯出 HCP 人事異動匯入檔 (CSV - UTF-8 with BOM)</b><br>
+                • 內嵌 UTF-8 BOM (\ufeff)，微軟 Excel 開啟 100% 不亂碼。<br>
+                • 包含 21 欄標準異動欄位，符合鼎新 HCP 批次主檔匯入格式。
+              </div>
+              <div style="background:#ffffff; border:1px solid #d8b4fe; border-radius:6px; padding:10px 12px;">
+                <b style="color:#7e22ce;">⚡ 途徑 B：串接 HCP RESTful API (即時/排程主檔同步)</b><br>
+                • Endpoint: POST /api/v1/personnel/batch-adjust。<br>
+                • 排程於生效日 00:00 自動無縫生效，更新人員主檔與組織編制。
+              </div>
+            </div>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+    printWin.document.open();
+    printWin.document.write(htmlContent);
+    printWin.document.close();
+  };
+
   function renderFinalReviewModalContent() {
     const eff = $('#effectiveDate').value || new Date().toISOString().split('T')[0];
     const roleText = $('#selLoginRole')?.value === 'hr' ? 'HR 管理者' : (locateDept(focusDeptId)?.department?.name + ' 長官');
+
+    const flowchartBannerHtml = `
+      <div style="background:#ffffff; border:1.5px solid #cbd5e1; border-radius:8px; padding:10px 12px; margin-bottom:12px; box-shadow:0 1px 3px rgba(0,0,0,0.03);">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+          <div style="font-weight:800; font-size:13.5px; color:#0f172a; display:flex; align-items:center; gap:6px;">
+            <span>📊</span> 簽核與 HCP 對接流程架構圖 (紙本 vs 線上 BPM)
+          </div>
+          <div style="display:flex; gap:6px; align-items:center;">
+            <button type="button" class="btn-action" onclick="copyWorkflowDiagramText()" style="padding:4px 9px; font-size:12px; font-weight:700;" title="複製文字流程架構">
+              📋 複製流程文字
+            </button>
+            <button type="button" class="btn-action" onclick="copyWorkflowMermaidCode()" style="padding:4px 9px; font-size:12px; font-weight:700;" title="複製 Mermaid 流程圖代碼">
+              📋 複製 Mermaid
+            </button>
+            <button type="button" class="btn-action primary" onclick="printWorkflowDiagram()" style="padding:4px 11px; font-size:12px; font-weight:700;" title="列印流程圖或另存 PDF">
+              🖨️ 列印流程圖
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+
 
     const tabNavHtml = `
       <div class="workflow-tab-nav">
@@ -5063,6 +5312,7 @@ window.revertAllToInitial = function() {
         <div>申請身分：<b>${esc(roleText)}</b></div>
       </div>
 
+      ${flowchartBannerHtml}
       ${tabNavHtml}
       ${workflowBody}
 
