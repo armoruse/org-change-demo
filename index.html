@@ -4945,54 +4945,61 @@ window.revertAllToInitial = function() {
   
   const workflowDiagramText = `【鈊象電子 - 組織架構暨人員異動 簽核與系統對接流程架構圖】
 
-[起點：組織異動工作台 (提出調動與設定)]
-       |
-       +---------------------------------------------+
-       |                                             |
-[方式 1：紙本送簽模式 (傳統公文簽呈)]         [方式 2：線上電子簽核 (BPM 四關卡流程)]
-       |                                             |
- 1. 🖨️ 列印 A4 異動簽呈單                     1. 🚀 發起線上電子簽核 (生成 BPM 追蹤單號)
-       |                                             |
- 2. ✍️ 實體紙本送陳主管簽章核決                 2. ✍️ 原單位主管線上審核
-    • 原單位主管 ➔ 新單位主管                       |
-    • HR 覆核 ➔ 總經理 / 決策長官              3. 🤝 新單位主管線上會簽
-       |                                             |
- 3. 📢 HR 於線上標記紙本簽畢並輸入文號          4. 📑 HR 人資單位覆核生效
-       |                                             |
- 4. 💻 系統自動發送名冊通知 MIS 相關單位         5. 💻 MIS 系統自動派工開通帳號與門禁權限
-    • AD 帳號部門群組更新                         • AD / 門禁卡 / Email / 專案檔案權限
-    • 門禁卡權限與樓層開通                           |
-    • 內部公務 Email 群組與檔案目錄                 |
-       |                                             |
-       +---------------------------------------------+
-                               |
-            [共通底層：HCP 人事主檔系統對接]
-            • 📥 匯出 HCP 異動資料匯入檔 (CSV - UTF-8 with BOM)
-            • ⚡ 串接 HCP RESTful API (生效日 00:00 自動無縫同步主檔)`;
+                     [ 🎯 組織異動工作台 (完成調動、職務與組長設定) ]
+                                             │
+                     ┌───────────────────────┴───────────────────────┐
+                     │                                               │
+       【方式 1：紙本送簽模式 (傳統公文簽呈)】             【方式 2：線上電子簽核流程 (BPM 系統)】
+                     │                                               │
+       1. 🖨️ 列印 A4 異動簽呈單 (附主管簽章欄)        1. 🚀 發起線上電子簽核 (生成 BPM 追蹤單號)
+                     │                                               │
+       2. ✍️ 實體紙本送陳主管簽名核決                 2. ✍️ 原單位主管線上審核
+          • 原單位主管 ➔ 新單位接收主管                               │
+          • HR 覆核 ➔ 總經理 / 決策長官               3. 🤝 新單位接收主管線上會簽
+                     │                                               │
+       3. 📢 HR 於線上標記紙本簽畢並登錄文號           4. 📑 HR 人資單位覆核生效
+                     │                                               │
+                     └───────────────────────┬───────────────────────┘
+                                             │
+                          [ ✅ 簽核核決完成，異動正式生效 ]
+                                             │
+                     ┌───────────────────────┴───────────────────────┐
+                     │                                               │
+       【📢 MIS / IT 權限派工開通】                        【🔄 鼎新 HCP 人事主檔同步】
+       • AD 帳號部門群組調整                               • 📥 匯出 HCP 異動匯入檔 (CSV - UTF-8 BOM)
+       • 門禁卡樓層與部門權限開通                          • ⚡ 串接 HCP RESTful API (排程於生效日自動生效)
+       • 內部公務 Email 群組與專案目錄權限`;
 
   const workflowMermaidCode = `flowchart TD
-    A["組織異動工作台 (提出調動與設定)"] --> B{"選擇簽核流程模式"}
-    
-    subgraph 方式一: 紙本送簽模式 (傳統公文簽呈)
-        B -->|方式 1| C["🖨️ 列印 A4 異動簽呈單"]
-        C --> D["紙本送陳實體簽名核決<br>(原主管 ➔ 新主管 ➔ HR ➔ 總經理)"]
-        D --> E["📢 HR 線上標記簽畢並輸入文號"]
-        E --> F["系統自動發送名冊通知 MIS 開通權限<br>(AD帳號、門禁卡、Email、檔案目錄)"]
-    end
-    
-    subgraph 方式二: 線上電子簽核 (BPM 流程)
-        B -->|方式 2| G["🚀 發起線上電子簽核 (生成 BPM 單號)"]
-        G --> H["原單位主管線上審核"]
-        H --> I["新單位主管線上會簽"]
-        I --> J["HR 人資單位覆核生效"]
-        J --> K["MIS 系統自動派工開通帳號與門禁"]
+    Start["🎯 組織異動工作台<br>(完成人員調動、職務與組長設定)"] --> Choice{"選擇簽核核決方式"}
+
+    subgraph Mode1["📄 方式 1：紙本送簽模式 (傳統公文簽呈)"]
+        direction TB
+        M1_1["1. 🖨️ 產生並列印 A4 異動簽呈單"] --> M1_2["2. ✍️ 實體紙本簽章核決<br>(原主管 ➔ 新主管 ➔ HR ➔ 總經理)"]
+        M1_2 --> M1_3["3. 📢 HR 於線上標記簽畢並登錄文號"]
     end
 
-    subgraph 共通 HCP 系統對接 (兩種方式皆支援)
-        F & K --> L["📥 匯出 HCP 異動資料匯入檔 (CSV - UTF-8 with BOM)"]
-        F & K --> M["⚡ 串接 HCP RESTful API (排程生效日 00:00 自動同步主檔)"]
-    end`;
+    subgraph Mode2["🚀 方式 2：線上電子簽核流程 (BPM 系統)"]
+        direction TB
+        M2_1["1. 🚀 發起線上電子簽核 (生成 BPM 單號)"] --> M2_2["2. ✍️ 原單位主管審核"]
+        M2_2 --> M2_3["3. 🤝 新單位主管線上會簽"]
+        M2_3 --> M2_4["4. 📑 HR 人資覆核生效"]
+    end
 
+    Choice -->|實體公文| Mode1
+    Choice -->|線上表單| Mode2
+
+    M1_3 --> Approved["✅ 簽核核決完成，異動正式生效"]
+    M2_4 --> Approved
+
+    subgraph Downstream["📢 後續系統對接與權限開通"]
+        direction TB
+        MIS["💻 MIS / IT 權限開通派工<br>• AD 帳號部門群組更新<br>• 門禁卡樓層權限開通<br>• 公務 Email 群組與目錄權限"]
+        HCP["🔄 鼎新 HCP 人事主檔同步<br>• 📥 匯出 HCP 異動匯入檔 (CSV - UTF-8 BOM)<br>• ⚡ 串接 HCP RESTful API 自動調整主檔"]
+    end
+
+    Approved --> MIS
+    Approved --> HCP`;
 
   window.copyWorkflowDiagramText = function() {
     navigator.clipboard.writeText(workflowDiagramText.trim()).then(() => {
@@ -5059,6 +5066,10 @@ window.revertAllToInitial = function() {
             🎯 組織異動工作台：完成組織調動、職務設定、組長任命與異動對照
           </div>
 
+          <div style="text-align:center; font-weight:800; color:#475569; margin:-6px 0;">
+            ⬇️ 選擇簽核核決流程方式（二選一） ⬇️
+          </div>
+
           <div class="branch-grid">
             <!-- 方式 1 -->
             <div class="branch-card" style="border-color:#93c5fd; background:#f8faff;">
@@ -5070,7 +5081,7 @@ window.revertAllToInitial = function() {
                   <div class="step-badge">1</div>
                   <div class="step-text">
                     <b>🖨️ 產生並列印 A4 異動簽呈單</b>
-                    <div class="step-sub">系統自動組裝異動清冊總表與四大主管簽章欄位。</div>
+                    <div class="step-sub">系統自動組裝異動清冊總表與四大主管簽名核決欄位。</div>
                   </div>
                 </li>
                 <li class="step-item">
@@ -5083,15 +5094,8 @@ window.revertAllToInitial = function() {
                 <li class="step-item">
                   <div class="step-badge">3</div>
                   <div class="step-text">
-                    <b>📢 HR 於線上標記紙本簽畢並輸入文號</b>
+                    <b>📢 HR 於線上標記紙本簽畢並登錄文號</b>
                     <div class="step-sub">登錄核決公文文號，確認異動生效。</div>
-                  </div>
-                </li>
-                <li class="step-item">
-                  <div class="step-badge">4</div>
-                  <div class="step-text">
-                    <b>💻 系統自動發送名冊通知 MIS/IT 相關單位</b>
-                    <div class="step-sub">通報 AD 帳號群組、門禁卡樓層、Email 群組與專案目錄權限切換。</div>
                   </div>
                 </li>
               </ul>
@@ -5100,7 +5104,7 @@ window.revertAllToInitial = function() {
             <!-- 方式 2 -->
             <div class="branch-card" style="border-color:#86efac; background:#f0fdf4;">
               <div class="branch-title" style="color:#15803d; border-color:#bbf7d0;">
-                <span>🚀</span> 方式 2：線上電子簽核流程 (BPM 四關卡)
+                <span>🚀</span> 方式 2：線上電子簽核流程 (BPM 系統)
               </div>
               <ul class="step-list">
                 <li class="step-item">
@@ -5114,7 +5118,7 @@ window.revertAllToInitial = function() {
                   <div class="step-badge" style="background:#16a34a;">2</div>
                   <div class="step-text">
                     <b>✍️ 原單位主管線上審核</b>
-                    <div class="step-sub">由調出部門部長確認業務移交無誤。</div>
+                    <div class="step-sub">由調出部門部長線上確認業務移交無誤。</div>
                   </div>
                 </li>
                 <li class="step-item">
@@ -5131,32 +5135,35 @@ window.revertAllToInitial = function() {
                     <div class="step-sub">人資主管覆核編制、職等職級並排程生效日期。</div>
                   </div>
                 </li>
-                <li class="step-item">
-                  <div class="step-badge" style="background:#16a34a;">5</div>
-                  <div class="step-text">
-                    <b>💻 MIS 系統自動派工開通權限</b>
-                    <div class="step-sub">全自動派工開通 AD 帳號、門禁卡與內部系統存取權。</div>
-                  </div>
-                </li>
               </ul>
             </div>
           </div>
 
-          <!-- HCP 對接底層 -->
-          <div class="hcp-bottom-card">
-            <div class="hcp-bottom-title">
-              <span>🔄</span> 共通底層：HCP 人事主檔系統對接 (兩種送簽方式均必備)
-            </div>
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; font-size:12.5px; color:#334155; margin-top:8px;">
-              <div style="background:#ffffff; border:1px solid #d8b4fe; border-radius:6px; padding:10px 12px;">
-                <b style="color:#7e22ce;">📥 途徑 A：匯出 HCP 人事異動匯入檔 (CSV - UTF-8 with BOM)</b><br>
-                • 內嵌 UTF-8 BOM (\ufeff)，微軟 Excel 開啟 100% 不亂碼。<br>
-                • 包含 21 欄標準異動欄位，符合鼎新 HCP 批次主檔匯入格式。
+          <!-- 匯流節點 -->
+          <div style="background:#ecfdf5; border:2px solid #10b981; border-radius:8px; padding:12px; text-align:center; font-weight:800; font-size:15px; color:#065f46;">
+            ✅ 簽核核決完成，異動正式生效 (生效日 00:00 自動切換)
+          </div>
+
+          <!-- 後續雙軌系統對接 -->
+          <div class="branch-grid">
+            <div style="background:#ffffff; border:1.5px solid #cbd5e1; border-radius:8px; padding:14px;">
+              <div style="font-weight:800; font-size:14px; color:#0f172a; margin-bottom:6px; display:flex; align-items:center; gap:6px;">
+                <span>💻</span> 1. MIS / IT 權限派工開通
               </div>
-              <div style="background:#ffffff; border:1px solid #d8b4fe; border-radius:6px; padding:10px 12px;">
-                <b style="color:#7e22ce;">⚡ 途徑 B：串接 HCP RESTful API (即時/排程主檔同步)</b><br>
-                • Endpoint: POST /api/v1/personnel/batch-adjust。<br>
-                • 排程於生效日 00:00 自動無縫生效，更新人員主檔與組織編制。
+              <div style="font-size:12.5px; color:#475569; line-height:1.6;">
+                • AD 帳號部門群組更新與漫遊設定<br>
+                • 門禁卡樓層與研發實驗室權限開通<br>
+                • 內部公務 Email 群組與專案檔案目錄存取
+              </div>
+            </div>
+
+            <div style="background:#ffffff; border:1.5px solid #cbd5e1; border-radius:8px; padding:14px;">
+              <div style="font-weight:800; font-size:14px; color:#0f172a; margin-bottom:6px; display:flex; align-items:center; gap:6px;">
+                <span>🔄</span> 2. 鼎新 HCP 人事主檔同步 (雙途徑)
+              </div>
+              <div style="font-size:12.5px; color:#475569; line-height:1.6;">
+                • <b>途徑 A (CSV)</b>：匯出帶有 UTF-8 BOM 之 21 欄異動匯入檔，Excel 不亂碼。<br>
+                • <b>途徑 B (API)</b>：串接 RESTful API (POST /api/v1/personnel/batch-adjust) 自動調整。
               </div>
             </div>
           </div>
