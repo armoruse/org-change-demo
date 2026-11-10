@@ -1909,7 +1909,7 @@ function getDeptLeadership(deptId) {
           </div>
           <div class="dept-col-title">
             <span class="editable-title" onclick="${!isTarget ? `renameDeptPrompt('${esc(loc.department.id)}')` : ''}" title="${!isTarget ? '點擊修改部門名稱' : ''}">
-              📁 ${esc(loc.department.name)}
+              📁 ${esc(loc.department.name)} ${!isTarget ? '<span style="font-size:12px; opacity:0.6;" title="點擊修改名稱">✏️</span>' : ''}
             </span>
           </div>
           <!-- 部長、副部長無icon，簡潔置於部門名稱下方 -->
@@ -1965,7 +1965,7 @@ function getDeptLeadership(deptId) {
         <div class="group-card-top">
           <div class="group-card-name-row">
             <span class="group-card-title editable-title" onclick="${isManaged ? `renameGroupPrompt('${esc(g.id)}')` : ''}" title="${isManaged ? '點擊修改組別名稱' : ''}">
-              ${esc(g.name)}
+              ${esc(g.name)} ${isManaged ? '<span style="font-size:11px; opacity:0.6;" title="點擊修改名稱">✏️</span>' : ''}
             </span>
             <div class="group-card-actions">
               ${isManaged ? `
@@ -2281,6 +2281,130 @@ function getDeptLeadership(deptId) {
     /* =========================================================
    * 新增組別 (Quick Add Group)
    * ========================================================= */
+    /* =========================================================
+   * 組別改名與部門改名 (Rename Group & Department)
+   * ========================================================= */
+  window.renameGroupPrompt = function(gid) {
+    const cur = locateGroup(gid);
+    if (!cur) return;
+    const oldName = cur.group.name;
+
+    const body = `
+      <div class="form-group">
+        <label class="form-label">所屬部門</label>
+        <input type="text" class="form-control" value="${esc(cur.department.name)}" disabled style="background:#f1f5f9;" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">組別名稱</label>
+        <input type="text" id="modalRenameGroupName" class="form-control" value="${esc(oldName)}" style="font-size:14px; font-weight:700;" />
+      </div>
+    `;
+    const foot = `
+      <button class="btn-action" onclick="closeModal()">取消</button>
+      <button class="btn-action primary" onclick="submitRenameGroup('${esc(gid)}')">確認修改</button>
+    `;
+    openModal('修改組別名稱', body, foot);
+    setTimeout(() => {
+      const inp = $('#modalRenameGroupName');
+      if (inp) {
+        inp.focus();
+        inp.select();
+      }
+    }, 100);
+  };
+
+  window.submitRenameGroup = function(gid) {
+    const newName = ($('#modalRenameGroupName')?.value || '').trim();
+    if (!newName) {
+      alert('請輸入組別名稱');
+      return;
+    }
+    const cur = locateGroup(gid);
+    if (!cur) return;
+    const oldName = cur.group.name;
+    if (oldName === newName) {
+      closeModal();
+      return;
+    }
+
+    cur.group.name = newName;
+    changes.push({
+      id: 'CHG_' + Date.now(),
+      type: '組織異動',
+      orgAction: 'rename_group',
+      groupId: gid,
+      name: oldName,
+      from: oldName,
+      to: newName,
+      desc: `【組別改名】原「${oldName}」➔ 改為「${newName}」`
+    });
+
+    closeModal();
+    render();
+    toast(`已成功將組別改名為【${newName}】`);
+  };
+
+  window.renameDeptPrompt = function(deptId) {
+    const cur = locateDept(deptId);
+    if (!cur) return;
+    const oldName = cur.department.name;
+
+    const body = `
+      <div class="form-group">
+        <label class="form-label">所屬事業處</label>
+        <input type="text" class="form-control" value="${esc(cur.division.name)}" disabled style="background:#f1f5f9;" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">部門名稱</label>
+        <input type="text" id="modalRenameDeptName" class="form-control" value="${esc(oldName)}" style="font-size:14px; font-weight:700;" />
+      </div>
+    `;
+    const foot = `
+      <button class="btn-action" onclick="closeModal()">取消</button>
+      <button class="btn-action primary" onclick="submitRenameDept('${esc(deptId)}')">確認修改</button>
+    `;
+    openModal('修改部門名稱', body, foot);
+    setTimeout(() => {
+      const inp = $('#modalRenameDeptName');
+      if (inp) {
+        inp.focus();
+        inp.select();
+      }
+    }, 100);
+  };
+
+  window.submitRenameDept = function(deptId) {
+    const newName = ($('#modalRenameDeptName')?.value || '').trim();
+    if (!newName) {
+      alert('請輸入部門名稱');
+      return;
+    }
+    const cur = locateDept(deptId);
+    if (!cur) return;
+    const oldName = cur.department.name;
+    if (oldName === newName) {
+      closeModal();
+      return;
+    }
+
+    cur.department.name = newName;
+    changes.push({
+      id: 'CHG_' + Date.now(),
+      type: '組織異動',
+      orgAction: 'rename_dept',
+      deptId: deptId,
+      name: oldName,
+      from: oldName,
+      to: newName,
+      desc: `【部門改名】原「${oldName}」➔ 改為「${newName}」`
+    });
+
+    closeModal();
+    initFocusDeptOptions();
+    render();
+    toast(`已成功將部門改名為【${newName}】`);
+  };
+
   window.quickAddGroup = function(deptId) {
     const curDept = locateDept(deptId || focusDeptId);
     if (!curDept) return;
@@ -2432,12 +2556,15 @@ function getDeptLeadership(deptId) {
     const currentCleanProf = cleanTitle(p.profTitle || p.title);
 
     const body = `
-      <div style="background:#f1f5f9; padding:8px 12px; border-radius:8px; margin-bottom:12px; display:flex; align-items:center; gap:8px;">
-        <div class="person-avatar" style="width:32px; height:32px; font-size:14px;">${esc(p.name[0])}</div>
-        <div>
-          <b style="font-size:15px; color:#0f172a;">${esc(p.name)}</b>
-          <span style="font-size:12px; color:#64748b;">(工號：${esc(p.id)})</span>
+      <div style="background:#f1f5f9; padding:8px 12px; border-radius:8px; margin-bottom:12px; display:flex; align-items:center; justify-content:space-between; gap:8px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <div class="person-avatar" style="width:32px; height:32px; font-size:14px;">${esc(p.name[0])}</div>
+          <div>
+            <div style="font-size:11px; color:#64748b;">姓名 (可修改)</div>
+            <input type="text" id="editPersonName" class="form-control" value="${esc(p.name)}" style="font-size:14px; font-weight:700; padding:2px 8px; height:28px; width:130px; background:#ffffff;" />
+          </div>
         </div>
+        <div style="font-size:12px; color:#64748b;">工號：${esc(p.id)}</div>
       </div>
 
       <div class="form-group">
